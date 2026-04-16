@@ -1,4 +1,8 @@
-import { corsHeaders } from "@supabase/supabase-js/cors";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
 
 const SYSTEM_PROMPT = `Та бол дэлхийн шилдэг Forex coach AI юм. Нэрийг чинь "Coach" гэнэ. Монгол хэлээр ярьдаг.
 
@@ -80,19 +84,19 @@ Deno.serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("OPENAI_API_KEY");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {
-      throw new Error("OPENAI_API_KEY not set");
+      throw new Error("LOVABLE_API_KEY not set");
     }
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://ai-gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
           ...messages.map((m: { role: string; content: string }) => ({
@@ -108,7 +112,7 @@ Deno.serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error?.message || "OpenAI API error");
+      throw new Error(data.error?.message || "AI API error");
     }
 
     return new Response(
