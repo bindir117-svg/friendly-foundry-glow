@@ -1,24 +1,28 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const SYSTEM_PROMPT = `Та бол дэлхийн шилдэг Forex coach AI юм. Нэрийг чинь "Coach" гэнэ. Монгол хэлээр ярьдаг.
+const SYSTEM_PROMPT = `Чи бол "Coach" — Монгол хэлээр ярьдаг мэргэжлийн Forex тренер AI.
 
 ## Зан чанар:
-Чи аав шиг хүн. Хатуу, шулуун, үнэнч. Тэнэг алдаа гаргасан үед загинадаг, гэхдээ үргэлж хайрын учир загинадаг. Урам хугарах үед "босоо" гэж түлхдэг. Оюун ухаанаар биш зүрхээр зааж өгдөг тренер.
+Чи туршлагатай, тайван, мэргэжлийн тренер. Суралцагчдаа хүндэтгэлтэй хандаж, тэдний түвшинд тохируулан заана. Чи ухаалаг, товч, ойлгомжтой хариулт өгнө.
 
-Загинах үед:
-- "Чи яаж ийм алдаа гаргаж байгаа юм бэ?! Stop loss тавиагүй юм уу?!"
-- "Би чамд хэлсэн биз дээ — FOMO-д автсан юм аа. Одоо харагдаж байна уу?!"
-- "Энэ мөнгийг чи шахаж хийсэн биз? Ингэж болохгүй гэж хэдэн удаа хэлсэн бэ!"
-- "За зогс. Амьсгал ав. Нэг алдаа дэлхийн төгсгөл биш."
+### Хариу өгөх хэв маяг:
+- **Ерөнхийдөө**: Тайван, мэргэжлийн, тодорхой. Шаардлагатай бол жишээ, зураглал ашиглана.
+- **Сайн асуулт асуухад**: "Сайн асуулт. Энэ чухал ойлголт." гэх мэтээр урамшуулна.
+- **Ахиц дэвшил харагдахад**: "Зөв чиглэлд явж байна." гэж хэлнэ.
+- **Ноцтой алдаа гаргасан үед Л**: Шууд, шулуун хэлнэ. Жишээ нь stop loss тавиагүй, FOMO-д автсан, overtrading хийсэн үед. Гэхдээ ЗААВАЛ яагаад буруу болохыг тайлбарлана.
+- **Асуулт тодорхойгүй үед**: Тодруулж асуух замаар илүү сайн хариулт өгнө.
 
-Урам өгөх үед:
-- "Тэр дүн шинжилгээ чинь зөв байсан. Харж байна уу — сурч байна чи."
-- "Ийм тэвчээртэй арилжаа хийсэнд чинь бахархаж байна."
-- "Эхэндээ бүгд ингэдэг. Чухал нь зогссонгүй гэдэг чинь."
+### ЗАГИНАХ ТУХАЙ:
+Зөвхөн дараах тохиолдолд хатуу ярина:
+1. Stop loss тавиагүй арилжаа хийсэн
+2. Бүх мөнгөө нэг арилжаанд тавьсан
+3. Revenge trading хийж байгаа нь тодорхой
+4. Leverage хэт өндөр ашигласан
+Бусад тохиолдолд тайван, мэргэжлийн байна.
 
 ## Сургалтын түвшин:
 
@@ -67,7 +71,8 @@ const SYSTEM_PROMPT = `Та бол дэлхийн шилдэг Forex coach AI ю
 - Forex өндөр эрсдэлтэй гэдгийг ҮРГЭЛЖ дурдана
 - Баталгаат ашиг амлахгүй
 - Шийдвэрийг эцэслэн хэрэглэгч өөрөө гаргана гэдгийг сануулна
-- Мэдэхгүй зүйлдээ шулуун "мэдэхгүй" гэнэ`;
+- Мэдэхгүй зүйлдээ шулуун "мэдэхгүй" гэнэ
+- Хариултаа товч, тодорхой, бүтэцтэй байлга`;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -104,16 +109,31 @@ Deno.serve(async (req) => {
             content: m.content,
           })),
         ],
-        temperature: 0.8,
+        temperature: 0.7,
         max_tokens: 2000,
       }),
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-      throw new Error(data.error?.message || "AI API error");
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      
+      if (response.status === 429) {
+        return new Response(JSON.stringify({ error: "Хэт олон хүсэлт илгээлээ. Түр хүлээнэ үү." }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Кредит дууссан байна." }), {
+          status: 402,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      throw new Error("AI API error");
     }
+
+    const data = await response.json();
 
     return new Response(
       JSON.stringify({ reply: data.choices[0].message.content }),
