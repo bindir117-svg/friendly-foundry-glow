@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,9 @@ import {
   X,
   Save,
   Trash2,
+  Mic,
+  MicOff,
+  ArrowDown,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
@@ -39,6 +42,13 @@ const QUICK_ACTIONS = [
 
 const NOTES_KEY = "mandarin_notes";
 
+// Web Speech API типүүд
+type SpeechRecognitionType = typeof window extends { SpeechRecognition: infer T }
+  ? T
+  : typeof window extends { webkitSpeechRecognition: infer W }
+    ? W
+    : never;
+
 const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -47,9 +57,16 @@ const Index = () => {
   const [notesOpen, setNotesOpen] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [showJumpDown, setShowJumpDown] = useState(false);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<any>(null);
+  const stickToBottomRef = useRef(true);
 
+  // Notes load/save
   useEffect(() => {
     try {
       const saved = localStorage.getItem(NOTES_KEY);
@@ -61,12 +78,31 @@ const Index = () => {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
   }, [notes]);
 
+  // Scroll логик: зөвхөн хэрэглэгч ёроолд байгаа үед автоматаар скрол хийнэ
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    const atBottom = distanceFromBottom < 80;
+    stickToBottomRef.current = atBottom;
+    setShowJumpDown(!atBottom && messages.length > 0);
+  }, [messages.length]);
+
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (stickToBottomRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
   }, [messages]);
 
+  const scrollToBottom = () => {
+    stickToBottomRef.current = true;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  };
+
+  // Streaming — token-by-token UI урсгалыг гөлгөр болгоно
   const streamReply = async (allMessages: Message[]) => {
     setMessages([...allMessages, { role: "assistant", content: "" }]);
+    stickToBottomRef.current = true;
 
     const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/coach-chat`;
     const resp = await fetch(url, {
@@ -93,6 +129,27 @@ const Index = () => {
     const decoder = new TextDecoder();
     let buffer = "";
     let assistantText = "";
+    let pending = "";
+    let rafScheduled = false;
+
+    const flush = () => {
+      rafScheduled = false;
+      if (!pending) return;
+      assistantText += pending;
+      pending = "";
+      const snapshot = assistantText;
+      setMessages((prev) => {
+        const next = [...prev];
+        next[next.length - 1] = { role: "assistant", content: snapshot };
+        return next;
+      });
+    };
+
+    const schedule = () => {
+      if (rafScheduled) return;
+      rafScheduled = true;
+      requestAnimationFrame(flush);
+    };
 
     while (true) {
       const { done, value } = await reader.read();
@@ -111,12 +168,14 @@ const Index = () => {
           const parsed = JSON.parse(data);
           const delta = parsed.choices?.[0]?.delta?.content;
           if (delta) {
-            assistantText += delta;
-            setMessages([...allMessages, { role: "assistant", content: assistantText }]);
+            pending += delta;
+            schedule();
           }
-        } catch { /* skip non-json */ }
+        } catch { /* skip */ }
       }
     }
+    // Эцсийн flush
+    flush();
   };
 
   const sendMessage = async (content: string) => {
@@ -126,6 +185,7 @@ const Index = () => {
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
+    stickToBottomRef.current = true;
     try {
       await streamReply(newMessages);
     } catch {
@@ -150,8 +210,45 @@ const Index = () => {
     setTimeout(() => {
       setMessages([]);
       setInput("");
+      stickToBottomRef.current = true;
       inputRef.current?.focus();
     }, 200);
+  };
+
+  // Voice input — Web Speech API
+  const toggleVoice = () => {
+    const SR =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      alert("Таны хөтчид дуун таних боломжгүй байна. Chrome ашиглана уу.");
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+    const rec = new SR();
+    rec.lang = "mn-MN";
+    rec.interimResults = true;
+    rec.continuous = false;
+
+    let finalText = "";
+    rec.onresult = (e: any) => {
+      let interim = "";
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const t = e.results[i][0].transcript;
+        if (e.results[i].isFinal) finalText += t;
+        else interim += t;
+      }
+      setInput((finalText + interim).trim());
+    };
+    rec.onerror = () => setIsListening(false);
+    rec.onend = () => setIsListening(false);
+
+    recognitionRef.current = rec;
+    rec.start();
+    setIsListening(true);
   };
 
   const addNote = () => {
@@ -220,7 +317,7 @@ const Index = () => {
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto relative">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto relative">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-5 pb-8">
             <div className="w-full max-w-lg space-y-7">
@@ -236,7 +333,7 @@ const Index = () => {
                   Hi hii, Bin Dir-н баруун гар байна
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                  Forex-ийн талаар асуултаа бичээрэй. Анхан шатнаас ахисан түвшин хүртэл хамтдаа суралцана.
+                  Forex-ийн талаар асуултаа бичээрэй эсвэл дуугаараа ярь. Анхан шатнаас ахисан түвшин хүртэл хамтдаа суралцана.
                 </p>
               </div>
 
@@ -293,6 +390,17 @@ const Index = () => {
             <div ref={messagesEndRef} />
           </div>
         )}
+
+        {/* Доошлох товч */}
+        {showJumpDown && (
+          <button
+            onClick={scrollToBottom}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 w-9 h-9 rounded-full bg-card/90 backdrop-blur border border-primary/40 text-primary shadow-[0_4px_20px_hsl(var(--primary)/0.3)] flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all animate-fade-in"
+            aria-label="Доошлох"
+          >
+            <ArrowDown className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Input Area */}
@@ -303,10 +411,24 @@ const Index = () => {
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Асуултаа бичнэ үү..."
+              placeholder={isListening ? "Сонсож байна..." : "Асуултаа бичнэ үү..."}
               disabled={isLoading}
               className="bg-secondary/60 border-border/40 focus-visible:ring-primary/30 rounded-xl h-11 text-sm"
             />
+            <Button
+              type="button"
+              size="icon"
+              onClick={toggleVoice}
+              disabled={isLoading}
+              className={`btn-luxury rounded-xl h-11 w-11 shrink-0 ${
+                isListening
+                  ? "bg-destructive hover:bg-destructive/90 animate-pulse"
+                  : "bg-secondary hover:bg-secondary/80 text-foreground border border-border/60"
+              }`}
+              aria-label={isListening ? "Зогсоох" : "Дуугаар асуух"}
+            >
+              {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </Button>
             <Button
               type="submit"
               size="icon"
