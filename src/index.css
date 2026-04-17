@@ -72,3 +72,42 @@
     text-shadow: 0 0 20px hsl(330 85% 60% / 0.5);
   }
 }
+
+@layer utilities {
+  @keyframes star-spin {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.15); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  @keyframes star-pulse {
+    0%, 100% { filter: drop-shadow(0 0 8px hsl(330 85% 60% / 0.6)); }
+    50% { filter: drop-shadow(0 0 20px hsl(330 85% 60% / 0.9)); }
+  }
+  @keyframes sparkle-burst {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    100% { transform: scale(2) rotate(180deg); opacity: 0; }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-star-pulse {
+    animation: star-pulse 3s ease-in-out infinite;
+  }
+  .animate-sparkle {
+    animation: sparkle-burst 0.6s ease-out forwards;
+  }
+  .animate-fade-up {
+    animation: fade-up 0.4s ease-out;
+  }
+  .btn-luxury {
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-luxury:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px hsl(330 85% 60% / 0.35), 0 0 0 1px hsl(330 85% 60% / 0.4);
+  }
+  .btn-luxury:active {
+    transform: translateY(0) scale(0.97);
+  }
+}
