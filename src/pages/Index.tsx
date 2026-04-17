@@ -62,39 +62,44 @@ const Index = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-background">
+    <div className="flex flex-col h-screen bg-background relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_60%)]" />
+
       {/* Top Bar */}
-      <header className="flex items-center justify-between px-5 py-3 border-b border-border/50 backdrop-blur-sm bg-background/80 sticky top-0 z-10">
+      <header className="relative flex items-center justify-between px-5 py-3 border-b border-border/40 backdrop-blur-xl bg-background/60 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-9 h-9 rounded-lg bg-primary/15 flex items-center justify-center">
-              <TrendingUp className="w-4.5 h-4.5 text-primary" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
+              <TrendingUp className="w-5 h-5 text-primary-foreground" />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background" />
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-foreground tracking-tight">Coach</h1>
-            <p className="text-[11px] text-muted-foreground">Forex Тренер</p>
+            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              MANDARIN
+            </h1>
+            <p className="text-[11px] text-muted-foreground">Forex AI Тренер</p>
           </div>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-medium">
-            LIVE
+          <div className="px-2.5 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[10px] font-semibold tracking-wider">
+            ● LIVE
           </div>
         </div>
       </header>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto relative">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full px-5 pb-8">
             <div className="w-full max-w-lg space-y-8">
               {/* Hero */}
               <div className="text-center space-y-3 pt-8">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="w-7 h-7 text-primary" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4 shadow-[0_0_40px_hsl(var(--primary)/0.5)]">
+                  <TrendingUp className="w-8 h-8 text-primary-foreground" />
                 </div>
-                <h2 className="text-2xl font-bold text-foreground tracking-tight">
+                <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
                   Сайн уу, Trader
                 </h2>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
@@ -108,13 +113,13 @@ const Index = () => {
                   <button
                     key={action.label}
                     onClick={() => sendMessage(action.message)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border/60 bg-card/50 hover:bg-card hover:border-primary/30 transition-all duration-200 group text-left"
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-card hover:border-primary/50 hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)] transition-all duration-300 group text-left"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
+                    <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
                       <action.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
                     </div>
-                    <span className="text-sm text-foreground/90 flex-1">{action.label}</span>
-                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
+                    <span className="text-sm text-foreground/90 flex-1 font-medium">{action.label}</span>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                   </button>
                 ))}
               </div>
@@ -127,12 +132,12 @@ const Index = () => {
                 <div
                   className={`max-w-[85%] py-2.5 px-4 text-sm leading-relaxed ${
                     msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-2xl rounded-br-md mt-3"
-                      : "text-foreground/90"
+                      ? "bg-gradient-to-br from-primary to-accent text-primary-foreground rounded-2xl rounded-br-md mt-3 shadow-[0_4px_20px_hsl(var(--primary)/0.3)]"
+                      : "text-white"
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:mb-2 [&_ul]:mb-2 [&_ol]:mb-2 [&_h1]:text-foreground [&_h2]:text-foreground [&_h3]:text-foreground [&_strong]:text-foreground [&_a]:text-primary">
+                    <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:mb-2 [&_p]:text-white [&_li]:text-white [&_ul]:mb-2 [&_ol]:mb-2 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_strong]:text-primary [&_strong]:font-bold [&_a]:text-accent [&_code]:text-primary [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : (
@@ -145,9 +150,9 @@ const Index = () => {
               <div className="flex justify-start">
                 <div className="py-3 px-4">
                   <div className="flex gap-1.5">
-                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:0ms]" />
-                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:150ms]" />
-                    <span className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce [animation-delay:300ms]" />
+                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:0ms] shadow-[0_0_8px_hsl(var(--primary))]" />
+                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:150ms] shadow-[0_0_8px_hsl(var(--primary))]" />
+                    <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:300ms] shadow-[0_0_8px_hsl(var(--primary))]" />
                   </div>
                 </div>
               </div>
