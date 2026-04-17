@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send, TrendingUp, BarChart3, BookOpen, Shield, ChevronRight } from "lucide-react";
+import { Send, Star, BarChart3, BookOpen, Shield, TrendingUp, ChevronRight, Plus, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 
@@ -11,16 +11,17 @@ interface Message {
 }
 
 const QUICK_ACTIONS = [
-  { icon: BookOpen, label: "Forex үндэс", message: "Forex гэж юу вэ? Надад энгийнээр тайлбарлаж өгөөч." },
-  { icon: BarChart3, label: "EURUSD шинжилгээ", message: "EURUSD валют хосын дүн шинжилгээ хийж өгөөч." },
-  { icon: Shield, label: "Risk Management", message: "Мөнгө удирдлагын үндэс сургаач. Risk per trade хэрхэн тооцоолох вэ?" },
-  { icon: TrendingUp, label: "Price Action", message: "Price Action гэж юу вэ? Market structure хэрхэн уншихыг зааж өгөөч." },
+  { icon: BookOpen, label: "Forex үндэс", message: "Forex гэж юу вэ? Надад дэлгэрэнгүй, жишээтэй тайлбарлаж өгөөч." },
+  { icon: BarChart3, label: "EURUSD шинжилгээ", message: "EURUSD валют хосын дэлгэрэнгүй техникийн дүн шинжилгээ хийж өгөөч." },
+  { icon: Shield, label: "Risk Management", message: "Мөнгө удирдлагын үндэс, Risk per trade хэрхэн тооцоолох талаар дэлгэрэнгүй сургаач." },
+  { icon: TrendingUp, label: "Price Action", message: "Price Action гэж юу вэ? Market structure, Order Block, FVG зэргийг дэлгэрэнгүй заагаач." },
 ];
 
 const Index = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [sparkle, setSparkle] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,28 +62,56 @@ const Index = () => {
     sendMessage(input);
   };
 
+  const handleNewChat = () => {
+    setSparkle(true);
+    setTimeout(() => setSparkle(false), 600);
+    setTimeout(() => {
+      setMessages([]);
+      setInput("");
+      inputRef.current?.focus();
+    }, 200);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background relative overflow-hidden">
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_60%)]" />
+      <div className="pointer-events-none absolute -top-32 -right-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-accent/10 blur-3xl" />
 
       {/* Top Bar */}
       <header className="relative flex items-center justify-between px-5 py-3 border-b border-border/40 backdrop-blur-xl bg-background/60 sticky top-0 z-10">
         <div className="flex items-center gap-3">
           <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_20px_hsl(var(--primary)/0.4)]">
-              <TrendingUp className="w-5 h-5 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_24px_hsl(var(--primary)/0.5)] animate-star-pulse">
+              <Star className="w-5 h-5 text-primary-foreground fill-primary-foreground" />
             </div>
             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" />
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
               MANDARIN
             </h1>
             <p className="text-[11px] text-muted-foreground">Forex AI Тренер</p>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+
+        <div className="flex items-center gap-2">
+          {messages.length > 0 && (
+            <button
+              onClick={handleNewChat}
+              className="btn-luxury relative group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/30 text-primary text-xs font-semibold overflow-hidden"
+            >
+              <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-500" />
+              <span>Шинэ чат</span>
+              {sparkle && (
+                <>
+                  <Sparkles className="absolute top-0 left-2 w-3 h-3 text-primary animate-sparkle" />
+                  <Sparkles className="absolute bottom-0 right-2 w-3 h-3 text-accent animate-sparkle" />
+                </>
+              )}
+            </button>
+          )}
           <div className="px-2.5 py-1 rounded-full bg-primary/15 border border-primary/30 text-primary text-[10px] font-semibold tracking-wider">
             ● LIVE
           </div>
@@ -95,9 +124,12 @@ const Index = () => {
           <div className="flex flex-col items-center justify-center h-full px-5 pb-8">
             <div className="w-full max-w-lg space-y-8">
               {/* Hero */}
-              <div className="text-center space-y-3 pt-8">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-4 shadow-[0_0_40px_hsl(var(--primary)/0.5)]">
-                  <TrendingUp className="w-8 h-8 text-primary-foreground" />
+              <div className="text-center space-y-3 pt-8 animate-fade-up">
+                <div className="relative w-20 h-20 mx-auto mb-4">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_50px_hsl(var(--primary)/0.6)] animate-star-pulse" />
+                  <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                    <Star className="w-10 h-10 text-primary-foreground fill-primary-foreground" />
+                  </div>
                 </div>
                 <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
                   Сайн уу, Trader
@@ -108,12 +140,12 @@ const Index = () => {
               </div>
 
               {/* Quick Actions */}
-              <div className="space-y-2">
+              <div className="space-y-2 animate-fade-up">
                 {QUICK_ACTIONS.map((action) => (
                   <button
                     key={action.label}
                     onClick={() => sendMessage(action.message)}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-card hover:border-primary/50 hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)] transition-all duration-300 group text-left"
+                    className="btn-luxury w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-card hover:border-primary/50 group text-left"
                   >
                     <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
                       <action.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -128,7 +160,7 @@ const Index = () => {
         ) : (
           <div className="max-w-3xl mx-auto px-4 py-4 space-y-1">
             {messages.map((msg, i) => (
-              <div key={i} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div key={i} className={`flex animate-fade-up ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[85%] py-2.5 px-4 text-sm leading-relaxed ${
                     msg.role === "user"
@@ -137,7 +169,7 @@ const Index = () => {
                   }`}
                 >
                   {msg.role === "assistant" ? (
-                    <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:mb-2 [&_p]:text-white [&_li]:text-white [&_ul]:mb-2 [&_ol]:mb-2 [&_h1]:text-white [&_h2]:text-white [&_h3]:text-white [&_strong]:text-primary [&_strong]:font-bold [&_a]:text-accent [&_code]:text-primary [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded">
+                    <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-white [&_li]:text-white [&_li]:mb-1 [&_ul]:mb-3 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:mb-3 [&_ol]:pl-5 [&_ol]:list-decimal [&_h1]:text-white [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-white [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-white [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_strong]:text-primary [&_strong]:font-bold [&_a]:text-accent [&_code]:text-primary [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-primary/50 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-white/80">
                       <ReactMarkdown>{msg.content}</ReactMarkdown>
                     </div>
                   ) : (
@@ -178,7 +210,7 @@ const Index = () => {
               type="submit"
               size="icon"
               disabled={isLoading || !input.trim()}
-              className="rounded-xl h-11 w-11 shrink-0"
+              className="btn-luxury rounded-xl h-11 w-11 shrink-0"
             >
               <Send className="w-4 h-4" />
             </Button>
