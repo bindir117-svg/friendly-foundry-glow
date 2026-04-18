@@ -511,7 +511,7 @@ const Index = () => {
 
       {/* Chat Area */}
       <div className="flex-1 min-h-0 relative">
-        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain">
+        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain luxury-scroll">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-full px-5 pb-8">
               <div className="w-full max-w-lg space-y-7">
