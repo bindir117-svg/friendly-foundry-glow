@@ -458,7 +458,7 @@ const Index = () => {
             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
           </div>
           <div className="text-left">
-            <h1 className="text-base font-bold tracking-[0.15em] bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent text-glow">
+            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent text-glow">
               MNDRIN
             </h1>
             <p className="text-[10px] text-muted-foreground tracking-wider uppercase">Forex AI Тренер</p>
