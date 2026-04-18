@@ -744,7 +744,7 @@ const Index = () => {
 
             {/* Opened note view */}
             {openedNote ? (
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto luxury-scroll p-4">
                 <div
                   className="rounded-2xl p-5 shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.4)]"
                   style={{
