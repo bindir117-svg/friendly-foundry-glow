@@ -669,7 +669,7 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto luxury-scroll p-2 space-y-1">
               {sessions.length === 0 ? (
                 <div className="text-center py-12 text-xs text-muted-foreground">
                   <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
