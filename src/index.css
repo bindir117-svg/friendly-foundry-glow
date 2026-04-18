@@ -124,4 +124,42 @@
   .btn-luxury:active {
     transform: translateY(0) scale(0.97);
   }
+
+  /* Luxury pink scrollbar */
+  .luxury-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(330 85% 60% / 0.6) transparent;
+  }
+  .luxury-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+  .luxury-scroll::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, hsl(0 0% 5%), hsl(0 0% 7%));
+    border-left: 1px solid hsl(330 85% 60% / 0.15);
+  }
+  .luxury-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, hsl(330 85% 60%), hsl(290 80% 55%));
+    border-radius: 999px;
+    border: 2px solid hsl(0 0% 6%);
+    box-shadow: 0 0 10px hsl(330 85% 60% / 0.5);
+  }
+  .luxury-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, hsl(330 90% 65%), hsl(290 85% 60%));
+    box-shadow: 0 0 16px hsl(330 85% 60% / 0.8);
+  }
+
+  /* Logo animations */
+  @keyframes logo-orbit { to { transform: rotate(360deg); } }
+  @keyframes logo-ring {
+    0%, 100% { transform: scale(1); opacity: 0.5; }
+    50% { transform: scale(1.18); opacity: 0.9; }
+  }
+  @keyframes logo-shimmer {
+    0%, 100% { opacity: 0.4; transform: translateX(-100%); }
+    50% { opacity: 0.9; }
+    100% { transform: translateX(100%); }
+  }
+  .logo-orbit { animation: logo-orbit 10s linear infinite; }
+  .logo-ring { animation: logo-ring 3s ease-in-out infinite; }
+  .logo-shimmer { animation: logo-shimmer 3s ease-in-out infinite; }
 }

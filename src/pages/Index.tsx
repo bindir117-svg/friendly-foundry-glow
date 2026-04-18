@@ -425,20 +425,43 @@ const Index = () => {
       <header className="relative flex items-center justify-between px-4 py-3 border-b border-border/40 backdrop-blur-xl bg-background/60 sticky top-0 z-10 shrink-0">
         <button
           onClick={goHome}
-          className="btn-luxury flex items-center gap-2.5 group"
+          className="btn-luxury flex items-center gap-3 group"
           aria-label="Нүүр"
         >
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-[0_0_24px_hsl(var(--primary)/0.5)] animate-star-pulse group-hover:scale-105 transition-transform">
-              <Star className="w-5 h-5 text-primary-foreground fill-primary-foreground" />
+          <div className="relative w-11 h-11">
+            {/* Outer rotating gradient ring */}
+            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-primary via-accent to-primary opacity-70 blur-md logo-ring" />
+            {/* Spinning conic border */}
+            <div
+              className="absolute inset-0 rounded-2xl logo-orbit"
+              style={{
+                background:
+                  "conic-gradient(from 0deg, hsl(330 85% 60%), hsl(290 80% 55%), hsl(330 85% 60%), hsl(320 90% 70%), hsl(330 85% 60%))",
+                padding: "1.5px",
+              }}
+            >
+              <div className="w-full h-full rounded-2xl bg-background" />
             </div>
-            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse" />
+            {/* Inner star plate */}
+            <div className="absolute inset-[3px] rounded-[10px] bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-[inset_0_1px_2px_hsl(0_0%_100%/0.3),0_0_24px_hsl(var(--primary)/0.6)] overflow-hidden">
+              {/* Shimmer sweep */}
+              <div
+                className="absolute inset-0 logo-shimmer"
+                style={{
+                  background:
+                    "linear-gradient(110deg, transparent 30%, hsl(0 0% 100% / 0.35) 50%, transparent 70%)",
+                }}
+              />
+              <Star className="relative w-5 h-5 text-primary-foreground fill-primary-foreground drop-shadow-[0_0_4px_hsl(0_0%_100%/0.6)]" />
+            </div>
+            {/* Pulse dot */}
+            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
           </div>
           <div className="text-left">
-            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+            <h1 className="text-base font-bold tracking-[0.15em] bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent text-glow">
               MANDARIN
             </h1>
-            <p className="text-[10px] text-muted-foreground">Forex AI Тренер</p>
+            <p className="text-[10px] text-muted-foreground tracking-wider uppercase">Forex AI Тренер</p>
           </div>
         </button>
 
@@ -488,7 +511,7 @@ const Index = () => {
 
       {/* Chat Area */}
       <div className="flex-1 min-h-0 relative">
-        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain">
+        <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain luxury-scroll">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-full px-5 pb-8">
               <div className="w-full max-w-lg space-y-7">
@@ -646,7 +669,7 @@ const Index = () => {
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto luxury-scroll p-2 space-y-1">
               {sessions.length === 0 ? (
                 <div className="text-center py-12 text-xs text-muted-foreground">
                   <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
@@ -721,7 +744,7 @@ const Index = () => {
 
             {/* Opened note view */}
             {openedNote ? (
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto luxury-scroll p-4">
                 <div
                   className="rounded-2xl p-5 shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.4)]"
                   style={{
@@ -822,7 +845,7 @@ const Index = () => {
                 </div>
 
                 {/* Notes grid */}
-                <div className="flex-1 overflow-y-auto p-3">
+                <div className="flex-1 overflow-y-auto luxury-scroll p-3">
                   {notes.length === 0 ? (
                     <div className="text-center py-12 text-xs text-muted-foreground">
                       <StickyNote className="w-8 h-8 mx-auto mb-2 opacity-30" />
