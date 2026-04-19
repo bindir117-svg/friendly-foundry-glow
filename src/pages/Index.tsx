@@ -490,24 +490,37 @@ const Index = () => {
             >
               <div className="w-full h-full rounded-2xl bg-background" />
             </div>
-            {/* Inner star plate */}
-            <div className="absolute inset-[3px] rounded-[10px] bg-gradient-to-br from-primary via-accent to-primary flex items-center justify-center shadow-[inset_0_1px_2px_hsl(0_0%_100%/0.3),0_0_24px_hsl(var(--primary)/0.6)] overflow-hidden">
+            {/* Inner candlestick plate */}
+            <div className="absolute inset-[3px] rounded-[10px] bg-gradient-to-br from-background via-secondary to-background flex items-center justify-center shadow-[inset_0_1px_2px_hsl(0_0%_100%/0.15),0_0_24px_hsl(var(--primary)/0.6)] overflow-hidden">
               {/* Shimmer sweep */}
               <div
                 className="absolute inset-0 logo-shimmer"
                 style={{
                   background:
-                    "linear-gradient(110deg, transparent 30%, hsl(0 0% 100% / 0.35) 50%, transparent 70%)",
+                    "linear-gradient(110deg, transparent 30%, hsl(var(--primary) / 0.25) 50%, transparent 70%)",
                 }}
               />
-              <Star className="relative w-5 h-5 text-primary-foreground fill-primary-foreground drop-shadow-[0_0_4px_hsl(0_0%_100%/0.6)]" />
+              {/* Candlestick chart icon */}
+              <svg viewBox="0 0 24 24" className="relative w-6 h-6 drop-shadow-[0_0_4px_hsl(var(--primary)/0.8)]" fill="none">
+                {/* Bearish candle (left) */}
+                <line x1="6" y1="4" x2="6" y2="20" stroke="hsl(var(--destructive))" strokeWidth="1" />
+                <rect x="4" y="8" width="4" height="8" fill="hsl(var(--destructive))" rx="0.5" />
+                {/* Bullish candle (middle) */}
+                <line x1="12" y1="3" x2="12" y2="21" stroke="hsl(var(--primary))" strokeWidth="1" />
+                <rect x="10" y="6" width="4" height="11" fill="hsl(var(--primary))" rx="0.5" />
+                {/* Bullish candle (right, taller) */}
+                <line x1="18" y1="2" x2="18" y2="18" stroke="hsl(var(--primary))" strokeWidth="1" />
+                <rect x="16" y="4" width="4" height="10" fill="hsl(var(--primary))" rx="0.5" />
+                {/* Up arrow */}
+                <path d="M3 21 L12 14 L15 16 L21 11" stroke="hsl(var(--accent))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              </svg>
             </div>
             {/* Pulse dot */}
             <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
           </div>
           <div className="text-left">
             <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent text-glow">
-              MNDRIN
+              MANDARIN
             </h1>
             <p className="text-[10px] text-muted-foreground tracking-wider uppercase">Forex AI Тренер</p>
           </div>
