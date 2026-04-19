@@ -249,25 +249,72 @@ const Index = () => {
   };
 
   // ============ MESSAGES ============
-  const ensureSession = () => {
-    if (!activeIdRef.current) {
-      const id = crypto.randomUUID();
-      activeIdRef.current = id;
-      setActiveSessionId(id);
-    }
+  const ensureSession = async (firstUserText: string): Promise<string | null> => {
+    if (activeIdRef.current) return activeIdRef.current;
+    if (!user) return null;
+    const title = firstUserText.slice(0, 40) || "Шинэ яриа";
+    const { data, error } = await supabase
+      .from("chat_sessions")
+      .insert({ user_id: user.id, title })
+      .select("id")
+      .single();
+    if (error || !data) return null;
+    activeIdRef.current = data.id;
+    setActiveSessionId(data.id);
+    setSessions((prev) => [
+      { id: data.id, title, messages: [], updatedAt: Date.now() },
+      ...prev,
+    ]);
+    return data.id;
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isLoading) return;
-    ensureSession();
-    const userMessage: Message = { role: "user", content: content.trim() };
+    if (!content.trim() || isLoading || !user) return;
+    const text = content.trim();
+    const sessionId = await ensureSession(text);
+    if (!sessionId) return;
+
+    const userMessage: Message = { role: "user", content: text };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
     stickToBottomRef.current = true;
+
+    await supabase.from("chat_messages").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      role: "user",
+      content: text,
+    });
+
     try {
       await streamReply(newMessages);
+      setMessages((curr) => {
+        const last = curr[curr.length - 1];
+        if (last && last.role === "assistant" && last.content) {
+          supabase.from("chat_messages").insert({
+            session_id: sessionId,
+            user_id: user.id,
+            role: "assistant",
+            content: last.content,
+          }).then(() => {
+            supabase.from("chat_sessions")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", sessionId)
+              .then(() => {});
+          });
+          setSessions((prev) => {
+            const idx = prev.findIndex((s) => s.id === sessionId);
+            if (idx === -1) return prev;
+            const next = [...prev];
+            next[idx] = { ...next[idx], messages: curr, updatedAt: Date.now() };
+            const [act] = next.splice(idx, 1);
+            return [act, ...next];
+          });
+        }
+        return curr;
+      });
     } catch {
       setMessages([
         ...newMessages,
@@ -299,7 +346,6 @@ const Index = () => {
   };
 
   const goHome = () => {
-    // Logo click — буцаад home, идэвхтэй чат хадгалагдсан хэвээр.
     setMessages([]);
     activeIdRef.current = null;
     setActiveSessionId(null);
@@ -315,7 +361,8 @@ const Index = () => {
     stickToBottomRef.current = true;
   };
 
-  const deleteSession = (id: string) => {
+  const deleteSession = async (id: string) => {
+    await supabase.from("chat_sessions").delete().eq("id", id);
     setSessions((prev) => prev.filter((s) => s.id !== id));
     if (activeIdRef.current === id) {
       activeIdRef.current = null;
