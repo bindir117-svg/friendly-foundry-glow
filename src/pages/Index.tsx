@@ -542,6 +542,14 @@ const Index = () => {
               )}
             </button>
           )}
+
+          <button
+            onClick={signOut}
+            className="btn-luxury flex items-center justify-center w-8 h-8 rounded-full bg-secondary/60 border border-border/60 text-foreground/70 hover:text-destructive hover:border-destructive/40"
+            aria-label="Гарах"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </header>
 
