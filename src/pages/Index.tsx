@@ -608,8 +608,8 @@ const Index = () => {
                 <div className="text-center space-y-3 pt-8 animate-fade-up">
                   <div className="relative w-20 h-20 mx-auto mb-4">
                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_50px_hsl(var(--primary)/0.6)] animate-star-pulse" />
-                    <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                      <Star className="w-10 h-10 text-primary-foreground fill-primary-foreground" />
+                    <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-background via-secondary to-background border border-primary/40 flex items-center justify-center">
+                      <CandlestickChart className="w-10 h-10 text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]" />
                     </div>
                   </div>
                   <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
