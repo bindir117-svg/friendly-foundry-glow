@@ -69,6 +69,7 @@ const NOTE_COLORS = [
 ];
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -94,60 +95,47 @@ const Index = () => {
   const activeIdRef = useRef<string | null>(null);
 
   // ============ LOAD ============
+  // Notes — local only
   useEffect(() => {
     try {
       const savedNotes = localStorage.getItem(NOTES_KEY);
       if (savedNotes) setNotes(JSON.parse(savedNotes));
-
-      const savedSessions = localStorage.getItem(SESSIONS_KEY);
-      if (savedSessions) {
-        const parsed: ChatSession[] = JSON.parse(savedSessions);
-        setSessions(parsed);
-        const activeId = localStorage.getItem(ACTIVE_SESSION_KEY);
-        const active = parsed.find((s) => s.id === activeId);
-        if (active) {
-          setActiveSessionId(active.id);
-          setMessages(active.messages);
-          activeIdRef.current = active.id;
-        }
-      }
     } catch { /* ignore */ }
   }, []);
+
+  // Sessions + messages from DB
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: sess } = await supabase
+        .from("chat_sessions")
+        .select("id, title, updated_at")
+        .order("updated_at", { ascending: false });
+      if (!sess || sess.length === 0) { setSessions([]); return; }
+      const ids = sess.map((s) => s.id);
+      const { data: msgs } = await supabase
+        .from("chat_messages")
+        .select("session_id, role, content, created_at")
+        .in("session_id", ids)
+        .order("created_at", { ascending: true });
+      const grouped: Record<string, Message[]> = {};
+      (msgs || []).forEach((m: any) => {
+        if (!grouped[m.session_id]) grouped[m.session_id] = [];
+        grouped[m.session_id].push({ role: m.role, content: m.content });
+      });
+      setSessions(sess.map((s) => ({
+        id: s.id,
+        title: s.title,
+        messages: grouped[s.id] || [],
+        updatedAt: new Date(s.updated_at).getTime(),
+      })));
+    })();
+  }, [user]);
 
   // ============ PERSIST ============
   useEffect(() => {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
   }, [notes]);
-
-  useEffect(() => {
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-  }, [sessions]);
-
-  useEffect(() => {
-    if (activeSessionId) localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId);
-    else localStorage.removeItem(ACTIVE_SESSION_KEY);
-  }, [activeSessionId]);
-
-  // Auto-save active session when messages update
-  useEffect(() => {
-    if (!activeIdRef.current || messages.length === 0) return;
-    setSessions((prev) => {
-      const idx = prev.findIndex((s) => s.id === activeIdRef.current);
-      const firstUser = messages.find((m) => m.role === "user");
-      const title = firstUser ? firstUser.content.slice(0, 40) : "Шинэ чат";
-      if (idx === -1) {
-        return [
-          { id: activeIdRef.current!, title, messages, updatedAt: Date.now() },
-          ...prev,
-        ];
-      }
-      const next = [...prev];
-      next[idx] = { ...next[idx], title: next[idx].title || title, messages, updatedAt: Date.now() };
-      // Move active to top
-      const [active] = next.splice(idx, 1);
-      return [active, ...next];
-    });
-  }, [messages]);
 
   // ============ SCROLL ============
   const handleScroll = useCallback(() => {
