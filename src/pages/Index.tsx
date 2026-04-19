@@ -26,6 +26,9 @@ import {
   Palette,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { LogOut } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -55,8 +58,6 @@ const QUICK_ACTIONS = [
 ];
 
 const NOTES_KEY = "mandarin_notes_v2";
-const SESSIONS_KEY = "mandarin_sessions_v1";
-const ACTIVE_SESSION_KEY = "mandarin_active_session_v1";
 
 const NOTE_COLORS = [
   { name: "Pink", value: "330 85% 60%" },
@@ -68,6 +69,7 @@ const NOTE_COLORS = [
 ];
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -93,60 +95,47 @@ const Index = () => {
   const activeIdRef = useRef<string | null>(null);
 
   // ============ LOAD ============
+  // Notes — local only
   useEffect(() => {
     try {
       const savedNotes = localStorage.getItem(NOTES_KEY);
       if (savedNotes) setNotes(JSON.parse(savedNotes));
-
-      const savedSessions = localStorage.getItem(SESSIONS_KEY);
-      if (savedSessions) {
-        const parsed: ChatSession[] = JSON.parse(savedSessions);
-        setSessions(parsed);
-        const activeId = localStorage.getItem(ACTIVE_SESSION_KEY);
-        const active = parsed.find((s) => s.id === activeId);
-        if (active) {
-          setActiveSessionId(active.id);
-          setMessages(active.messages);
-          activeIdRef.current = active.id;
-        }
-      }
     } catch { /* ignore */ }
   }, []);
+
+  // Sessions + messages from DB
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data: sess } = await supabase
+        .from("chat_sessions")
+        .select("id, title, updated_at")
+        .order("updated_at", { ascending: false });
+      if (!sess || sess.length === 0) { setSessions([]); return; }
+      const ids = sess.map((s) => s.id);
+      const { data: msgs } = await supabase
+        .from("chat_messages")
+        .select("session_id, role, content, created_at")
+        .in("session_id", ids)
+        .order("created_at", { ascending: true });
+      const grouped: Record<string, Message[]> = {};
+      (msgs || []).forEach((m: any) => {
+        if (!grouped[m.session_id]) grouped[m.session_id] = [];
+        grouped[m.session_id].push({ role: m.role, content: m.content });
+      });
+      setSessions(sess.map((s) => ({
+        id: s.id,
+        title: s.title,
+        messages: grouped[s.id] || [],
+        updatedAt: new Date(s.updated_at).getTime(),
+      })));
+    })();
+  }, [user]);
 
   // ============ PERSIST ============
   useEffect(() => {
     localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
   }, [notes]);
-
-  useEffect(() => {
-    localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-  }, [sessions]);
-
-  useEffect(() => {
-    if (activeSessionId) localStorage.setItem(ACTIVE_SESSION_KEY, activeSessionId);
-    else localStorage.removeItem(ACTIVE_SESSION_KEY);
-  }, [activeSessionId]);
-
-  // Auto-save active session when messages update
-  useEffect(() => {
-    if (!activeIdRef.current || messages.length === 0) return;
-    setSessions((prev) => {
-      const idx = prev.findIndex((s) => s.id === activeIdRef.current);
-      const firstUser = messages.find((m) => m.role === "user");
-      const title = firstUser ? firstUser.content.slice(0, 40) : "Шинэ чат";
-      if (idx === -1) {
-        return [
-          { id: activeIdRef.current!, title, messages, updatedAt: Date.now() },
-          ...prev,
-        ];
-      }
-      const next = [...prev];
-      next[idx] = { ...next[idx], title: next[idx].title || title, messages, updatedAt: Date.now() };
-      // Move active to top
-      const [active] = next.splice(idx, 1);
-      return [active, ...next];
-    });
-  }, [messages]);
 
   // ============ SCROLL ============
   const handleScroll = useCallback(() => {
@@ -260,25 +249,72 @@ const Index = () => {
   };
 
   // ============ MESSAGES ============
-  const ensureSession = () => {
-    if (!activeIdRef.current) {
-      const id = crypto.randomUUID();
-      activeIdRef.current = id;
-      setActiveSessionId(id);
-    }
+  const ensureSession = async (firstUserText: string): Promise<string | null> => {
+    if (activeIdRef.current) return activeIdRef.current;
+    if (!user) return null;
+    const title = firstUserText.slice(0, 40) || "Шинэ яриа";
+    const { data, error } = await supabase
+      .from("chat_sessions")
+      .insert({ user_id: user.id, title })
+      .select("id")
+      .single();
+    if (error || !data) return null;
+    activeIdRef.current = data.id;
+    setActiveSessionId(data.id);
+    setSessions((prev) => [
+      { id: data.id, title, messages: [], updatedAt: Date.now() },
+      ...prev,
+    ]);
+    return data.id;
   };
 
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isLoading) return;
-    ensureSession();
-    const userMessage: Message = { role: "user", content: content.trim() };
+    if (!content.trim() || isLoading || !user) return;
+    const text = content.trim();
+    const sessionId = await ensureSession(text);
+    if (!sessionId) return;
+
+    const userMessage: Message = { role: "user", content: text };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
     setIsLoading(true);
     stickToBottomRef.current = true;
+
+    await supabase.from("chat_messages").insert({
+      session_id: sessionId,
+      user_id: user.id,
+      role: "user",
+      content: text,
+    });
+
     try {
       await streamReply(newMessages);
+      setMessages((curr) => {
+        const last = curr[curr.length - 1];
+        if (last && last.role === "assistant" && last.content) {
+          supabase.from("chat_messages").insert({
+            session_id: sessionId,
+            user_id: user.id,
+            role: "assistant",
+            content: last.content,
+          }).then(() => {
+            supabase.from("chat_sessions")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", sessionId)
+              .then(() => {});
+          });
+          setSessions((prev) => {
+            const idx = prev.findIndex((s) => s.id === sessionId);
+            if (idx === -1) return prev;
+            const next = [...prev];
+            next[idx] = { ...next[idx], messages: curr, updatedAt: Date.now() };
+            const [act] = next.splice(idx, 1);
+            return [act, ...next];
+          });
+        }
+        return curr;
+      });
     } catch {
       setMessages([
         ...newMessages,
@@ -310,7 +346,6 @@ const Index = () => {
   };
 
   const goHome = () => {
-    // Logo click — буцаад home, идэвхтэй чат хадгалагдсан хэвээр.
     setMessages([]);
     activeIdRef.current = null;
     setActiveSessionId(null);
@@ -326,7 +361,8 @@ const Index = () => {
     stickToBottomRef.current = true;
   };
 
-  const deleteSession = (id: string) => {
+  const deleteSession = async (id: string) => {
+    await supabase.from("chat_sessions").delete().eq("id", id);
     setSessions((prev) => prev.filter((s) => s.id !== id));
     if (activeIdRef.current === id) {
       activeIdRef.current = null;
@@ -506,6 +542,14 @@ const Index = () => {
               )}
             </button>
           )}
+
+          <button
+            onClick={signOut}
+            className="btn-luxury flex items-center justify-center w-8 h-8 rounded-full bg-secondary/60 border border-border/60 text-foreground/70 hover:text-destructive hover:border-destructive/40"
+            aria-label="Гарах"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </header>
 
