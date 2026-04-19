@@ -26,6 +26,9 @@ import {
   Palette,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { LogOut } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -55,8 +58,6 @@ const QUICK_ACTIONS = [
 ];
 
 const NOTES_KEY = "mandarin_notes_v2";
-const SESSIONS_KEY = "mandarin_sessions_v1";
-const ACTIVE_SESSION_KEY = "mandarin_active_session_v1";
 
 const NOTE_COLORS = [
   { name: "Pink", value: "330 85% 60%" },
