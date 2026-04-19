@@ -568,13 +568,33 @@ const Index = () => {
             </button>
           )}
 
-          <button
-            onClick={signOut}
-            className="btn-luxury flex items-center justify-center w-8 h-8 rounded-full bg-secondary/60 border border-border/60 text-foreground/70 hover:text-destructive hover:border-destructive/40"
-            aria-label="Гарах"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="btn-luxury flex items-center justify-center w-8 h-8 rounded-full bg-secondary/60 border border-border/60 text-foreground/70 hover:text-destructive hover:border-destructive/40"
+                aria-label="Exit"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Exit?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Та системээс гарах гэж байна. Үнэхээр гарах уу?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Үгүй</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={signOut}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Exit
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </header>
 
