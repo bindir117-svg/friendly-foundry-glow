@@ -1,10 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Send,
-  Star,
   BarChart3,
   BookOpen,
   Shield,
@@ -12,19 +11,20 @@ import {
   ChevronRight,
   Plus,
   Sparkles,
-  StickyNote,
-  X,
-  Save,
-  Trash2,
   Mic,
   MicOff,
   ArrowDown,
   History,
   MessageSquare,
-  Pencil,
-  Check,
-  Palette,
   CandlestickChart,
+  Image as ImageIcon,
+  Palette,
+  X,
+  LogOut,
+  Trash2,
+  Loader2,
+  StickyNote,
+  User as UserIcon,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -40,11 +40,18 @@ import {
 import ReactMarkdown from "react-markdown";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { LogOut } from "lucide-react";
+import { TopNav, MobileNav } from "@/components/AppNav";
+import { useToast } from "@/hooks/use-toast";
 
+interface MessagePart {
+  type: "text" | "image_url";
+  text?: string;
+  image_url?: { url: string };
+}
 interface Message {
   role: "user" | "assistant";
-  content: string;
+  content: string | MessagePart[];
+  imagePreview?: string; // for displaying user-attached image
 }
 
 interface ChatSession {
@@ -54,14 +61,6 @@ interface ChatSession {
   updatedAt: number;
 }
 
-interface Note {
-  id: string;
-  title: string;
-  text: string;
-  color: string;
-  createdAt: number;
-}
-
 const QUICK_ACTIONS = [
   { icon: BookOpen, label: "Forex үндэс", message: "Forex гэж юу вэ? Надад дэлгэрэнгүй, жишээтэй тайлбарлаж өгөөч." },
   { icon: BarChart3, label: "EURUSD шинжилгээ", message: "EURUSD валют хосын дэлгэрэнгүй техникийн дүн шинжилгээ хийж өгөөч." },
@@ -69,51 +68,36 @@ const QUICK_ACTIONS = [
   { icon: TrendingUp, label: "Price Action", message: "Price Action гэж юу вэ? Market structure, Order Block, FVG зэргийг дэлгэрэнгүй заагаач." },
 ];
 
-const NOTES_KEY = "mandarin_notes_v2";
-
-const NOTE_COLORS = [
-  { name: "Pink", value: "330 85% 60%" },
-  { name: "Purple", value: "280 75% 60%" },
-  { name: "Blue", value: "210 85% 60%" },
-  { name: "Green", value: "150 65% 50%" },
-  { name: "Orange", value: "25 90% 60%" },
-  { name: "Yellow", value: "45 90% 55%" },
+const FEATURE_CARDS = [
+  { to: "/learn", icon: BookOpen, title: "Сургалт", desc: "АНХАН → АХИСАН шатлал", color: "from-green-500/20 to-emerald-500/10" },
+  { to: "/analyze", icon: ImageIcon, title: "График шинжилгээ", desc: "Зураг оруулаад AI-аар шинжлүүл", color: "from-blue-500/20 to-cyan-500/10" },
+  { to: "/design", icon: Palette, title: "AI Дизайн", desc: "Зураг үүсгэх", color: "from-pink-500/20 to-purple-500/10" },
+  { to: "/notes", icon: StickyNote, title: "Тэмдэглэл", desc: "Journal + зураг", color: "from-yellow-500/20 to-orange-500/10" },
 ];
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
   const [sparkle, setSparkle] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [newNote, setNewNote] = useState("");
-  const [openedNoteId, setOpenedNoteId] = useState<string | null>(null);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
-  const [editTitle, setEditTitle] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [showJumpDown, setShowJumpDown] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
   const stickToBottomRef = useRef(true);
   const activeIdRef = useRef<string | null>(null);
-
-  // ============ LOAD ============
-  // Notes — local only
-  useEffect(() => {
-    try {
-      const savedNotes = localStorage.getItem(NOTES_KEY);
-      if (savedNotes) setNotes(JSON.parse(savedNotes));
-    } catch { /* ignore */ }
-  }, []);
 
   // Sessions + messages from DB
   useEffect(() => {
@@ -144,12 +128,7 @@ const Index = () => {
     })();
   }, [user]);
 
-  // ============ PERSIST ============
-  useEffect(() => {
-    localStorage.setItem(NOTES_KEY, JSON.stringify(notes));
-  }, [notes]);
-
-  // ============ SCROLL ============
+  // SCROLL
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -171,20 +150,27 @@ const Index = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   };
 
-  // ============ STREAMING ============
+  // STREAMING
   const streamReply = async (allMessages: Message[]) => {
     setMessages([...allMessages, { role: "assistant", content: "" }]);
     stickToBottomRef.current = true;
 
+    // Build payload — convert MessagePart arrays back to OpenAI format
+    const payloadMessages = allMessages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    const { data: { session } } = await supabase.auth.getSession();
     const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/coach-chat`;
     const resp = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        Authorization: `Bearer ${session?.access_token}`,
         apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
       },
-      body: JSON.stringify({ messages: allMessages }),
+      body: JSON.stringify({ messages: payloadMessages }),
     });
 
     if (!resp.ok || !resp.body) {
@@ -209,7 +195,6 @@ const Index = () => {
         typing = false;
         return;
       }
-      // Хэт удаан биш — нэг кадрт олон тэмдэгт нэм. Хэрэв queue их бол хурдан гарга.
       const batchSize = Math.max(1, Math.min(charQueue.length > 80 ? 6 : 2, charQueue.length));
       assistantText += charQueue.splice(0, batchSize).join("");
       const snapshot = assistantText;
@@ -250,7 +235,6 @@ const Index = () => {
       }
     }
 
-    // Wait until typing queue drained
     await new Promise<void>((resolve) => {
       const wait = () => {
         if (charQueue.length === 0 && !typing) resolve();
@@ -260,7 +244,7 @@ const Index = () => {
     });
   };
 
-  // ============ MESSAGES ============
+  // SESSION
   const ensureSession = async (firstUserText: string): Promise<string | null> => {
     if (activeIdRef.current) return activeIdRef.current;
     if (!user) return null;
@@ -280,16 +264,89 @@ const Index = () => {
     return data.id;
   };
 
+  // IMAGE GENERATION INTENT DETECTION
+  const isImageRequest = (text: string): boolean => {
+    const lower = text.toLowerCase();
+    return /\b(зураг|зурж|зурах|generate image|draw|design|illustration)\b/.test(lower) &&
+           /\b(өг|хий|зурж|үүсг|оруул|generate|create|make|draw)\b/.test(lower);
+  };
+
+  const generateImageInChat = async (prompt: string, sessionId: string) => {
+    setGeneratingImage(true);
+    setMessages((prev) => [...prev, { role: "assistant", content: "🎨 Зураг үүсгэж байна..." }]);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const url = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co/functions/v1/generate-image`;
+      const resp = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        const errMsg = data.error || "Зураг үүсгэж чадсангүй";
+        setMessages((prev) => {
+          const n = [...prev];
+          n[n.length - 1] = { role: "assistant", content: `❌ ${errMsg}` };
+          return n;
+        });
+        return;
+      }
+      const md = `![generated](${data.imageUrl})\n\n*Prompt: ${prompt}*`;
+      setMessages((prev) => {
+        const n = [...prev];
+        n[n.length - 1] = { role: "assistant", content: md };
+        return n;
+      });
+      // Persist
+      if (user) {
+        await supabase.from("chat_messages").insert({
+          session_id: sessionId,
+          user_id: user.id,
+          role: "assistant",
+          content: md,
+        });
+      }
+    } finally {
+      setGeneratingImage(false);
+    }
+  };
+
+  // SEND
   const sendMessage = async (content: string) => {
-    if (!content.trim() || isLoading || !user) return;
+    if ((!content.trim() && !attachedImage) || isLoading || !user) return;
     const text = content.trim();
-    const sessionId = await ensureSession(text);
+    const sessionId = await ensureSession(text || "Зурагтай мессеж");
     if (!sessionId) return;
 
-    const userMessage: Message = { role: "user", content: text };
+    // Build user message — string OR multi-part with image
+    let userMessage: Message;
+    let dbContent: string;
+    const localImage = attachedImage;
+
+    if (localImage) {
+      userMessage = {
+        role: "user",
+        content: [
+          { type: "text", text: text || "Энэ зургийг шинжилж өгөөч" },
+          { type: "image_url", image_url: { url: localImage } },
+        ],
+        imagePreview: localImage,
+      };
+      dbContent = `[📷 Зураг] ${text}`;
+    } else {
+      userMessage = { role: "user", content: text };
+      dbContent = text;
+    }
+
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
+    setAttachedImage(null);
     setIsLoading(true);
     stickToBottomRef.current = true;
 
@@ -297,36 +354,41 @@ const Index = () => {
       session_id: sessionId,
       user_id: user.id,
       role: "user",
-      content: text,
+      content: dbContent,
     });
 
     try {
-      await streamReply(newMessages);
-      setMessages((curr) => {
-        const last = curr[curr.length - 1];
-        if (last && last.role === "assistant" && last.content) {
-          supabase.from("chat_messages").insert({
-            session_id: sessionId,
-            user_id: user.id,
-            role: "assistant",
-            content: last.content,
-          }).then(() => {
-            supabase.from("chat_sessions")
-              .update({ updated_at: new Date().toISOString() })
-              .eq("id", sessionId)
-              .then(() => {});
-          });
-          setSessions((prev) => {
-            const idx = prev.findIndex((s) => s.id === sessionId);
-            if (idx === -1) return prev;
-            const next = [...prev];
-            next[idx] = { ...next[idx], messages: curr, updatedAt: Date.now() };
-            const [act] = next.splice(idx, 1);
-            return [act, ...next];
-          });
-        }
-        return curr;
-      });
+      // Image generation intent → only if no attached image
+      if (!localImage && isImageRequest(text)) {
+        await generateImageInChat(text, sessionId);
+      } else {
+        await streamReply(newMessages);
+        setMessages((curr) => {
+          const last = curr[curr.length - 1];
+          if (last && last.role === "assistant" && typeof last.content === "string" && last.content) {
+            supabase.from("chat_messages").insert({
+              session_id: sessionId,
+              user_id: user.id,
+              role: "assistant",
+              content: last.content,
+            }).then(() => {
+              supabase.from("chat_sessions")
+                .update({ updated_at: new Date().toISOString() })
+                .eq("id", sessionId)
+                .then(() => {});
+            });
+            setSessions((prev) => {
+              const idx = prev.findIndex((s) => s.id === sessionId);
+              if (idx === -1) return prev;
+              const next = [...prev];
+              next[idx] = { ...next[idx], messages: curr, updatedAt: Date.now() };
+              const [act] = next.splice(idx, 1);
+              return [act, ...next];
+            });
+          }
+          return curr;
+        });
+      }
     } catch {
       setMessages([
         ...newMessages,
@@ -343,7 +405,18 @@ const Index = () => {
     sendMessage(input);
   };
 
-  // ============ NEW CHAT / HOME ============
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Зураг хэт том (5MB-аас бага)", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setAttachedImage(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const startNewChat = () => {
     setSparkle(true);
     setTimeout(() => setSparkle(false), 600);
@@ -352,6 +425,7 @@ const Index = () => {
       setActiveSessionId(null);
       setMessages([]);
       setInput("");
+      setAttachedImage(null);
       stickToBottomRef.current = true;
       inputRef.current?.focus();
     }, 150);
@@ -383,12 +457,11 @@ const Index = () => {
     }
   };
 
-  // ============ VOICE ============
+  // VOICE
   const toggleVoice = () => {
-    const SR =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) {
-      alert("Таны хөтчид дуун таних боломжгүй байна. Chrome ашиглана уу.");
+      toast({ title: "Дуун таних боломжгүй", description: "Chrome ашиглана уу.", variant: "destructive" });
       return;
     }
     if (isListening) {
@@ -419,51 +492,26 @@ const Index = () => {
     setIsListening(true);
   };
 
-  // ============ NOTES ============
-  const addNote = () => {
-    if (!newNote.trim()) return;
-    const lines = newNote.trim().split("\n");
-    const title = lines[0].slice(0, 40) || "Тэмдэглэл";
-    setNotes([
-      {
-        id: crypto.randomUUID(),
-        title,
-        text: newNote.trim(),
-        color: NOTE_COLORS[0].value,
-        createdAt: Date.now(),
-      },
-      ...notes,
-    ]);
-    setNewNote("");
+  const renderUserContent = (msg: Message) => {
+    if (msg.imagePreview) {
+      const text = Array.isArray(msg.content)
+        ? msg.content.find((p: any) => p.type === "text")?.text
+        : msg.content;
+      return (
+        <div className="space-y-2">
+          <img src={msg.imagePreview} alt="" className="rounded-lg max-w-[260px] max-h-[260px] object-cover" />
+          {text && <div>{text}</div>}
+        </div>
+      );
+    }
+    if (typeof msg.content === "string" && msg.content.startsWith("[📷 Зураг]")) {
+      return msg.content.replace("[📷 Зураг]", "📷").trim();
+    }
+    return typeof msg.content === "string" ? msg.content : "";
   };
-
-  const removeNote = (id: string) => {
-    setNotes(notes.filter((n) => n.id !== id));
-    if (openedNoteId === id) setOpenedNoteId(null);
-  };
-
-  const updateNoteColor = (id: string, color: string) => {
-    setNotes(notes.map((n) => (n.id === id ? { ...n, color } : n)));
-  };
-
-  const startEditNote = (note: Note) => {
-    setEditingNoteId(note.id);
-    setEditText(note.text);
-    setEditTitle(note.title);
-  };
-
-  const saveEditNote = () => {
-    if (!editingNoteId) return;
-    setNotes(notes.map((n) =>
-      n.id === editingNoteId ? { ...n, text: editText.trim(), title: editTitle.trim() || "Тэмдэглэл" } : n
-    ));
-    setEditingNoteId(null);
-  };
-
-  const openedNote = notes.find((n) => n.id === openedNoteId);
 
   return (
-    <div className="flex flex-col h-screen bg-background relative overflow-hidden">
+    <div className="flex flex-col h-screen bg-background relative overflow-hidden pb-16 md:pb-0">
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_60%)]" />
       <div className="pointer-events-none absolute -top-32 -right-32 w-96 h-96 rounded-full bg-primary/10 blur-3xl" />
@@ -476,55 +524,30 @@ const Index = () => {
           className="btn-luxury flex items-center gap-3 group"
           aria-label="Нүүр"
         >
-          <div className="relative w-11 h-11">
-            {/* Outer rotating gradient ring */}
-            <div className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-primary via-accent to-primary opacity-70 blur-md logo-ring" />
-            {/* Spinning conic border */}
-            <div
-              className="absolute inset-0 rounded-2xl logo-orbit"
-              style={{
-                background:
-                  "conic-gradient(from 0deg, hsl(330 85% 60%), hsl(290 80% 55%), hsl(330 85% 60%), hsl(320 90% 70%), hsl(330 85% 60%))",
-                padding: "1.5px",
-              }}
-            >
-              <div className="w-full h-full rounded-2xl bg-background" />
-            </div>
-            {/* Inner candlestick plate */}
-            <div className="absolute inset-[3px] rounded-[10px] bg-gradient-to-br from-background via-secondary to-background flex items-center justify-center shadow-[inset_0_1px_2px_hsl(0_0%_100%/0.15),0_0_24px_hsl(var(--primary)/0.6)] overflow-hidden">
-              {/* Shimmer sweep */}
-              <div
-                className="absolute inset-0 logo-shimmer"
-                style={{
-                  background:
-                    "linear-gradient(110deg, transparent 30%, hsl(var(--primary) / 0.25) 50%, transparent 70%)",
-                }}
-              />
-              {/* Candlestick chart icon */}
-              <svg viewBox="0 0 24 24" className="relative w-6 h-6 drop-shadow-[0_0_4px_hsl(var(--primary)/0.8)]" fill="none">
-                {/* Bearish candle (left) */}
+          {/* STATIC LOGO — no rotation/animation */}
+          <div className="relative w-10 h-10">
+            <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-primary to-accent shadow-[0_0_20px_hsl(var(--primary)/0.45)]" />
+            <div className="absolute inset-[1.5px] rounded-[10px] bg-gradient-to-br from-background via-secondary to-background flex items-center justify-center">
+              <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none">
                 <line x1="6" y1="4" x2="6" y2="20" stroke="hsl(var(--destructive))" strokeWidth="1" />
                 <rect x="4" y="8" width="4" height="8" fill="hsl(var(--destructive))" rx="0.5" />
-                {/* Bullish candle (middle) */}
                 <line x1="12" y1="3" x2="12" y2="21" stroke="hsl(var(--primary))" strokeWidth="1" />
                 <rect x="10" y="6" width="4" height="11" fill="hsl(var(--primary))" rx="0.5" />
-                {/* Bullish candle (right, taller) */}
                 <line x1="18" y1="2" x2="18" y2="18" stroke="hsl(var(--primary))" strokeWidth="1" />
                 <rect x="16" y="4" width="4" height="10" fill="hsl(var(--primary))" rx="0.5" />
-                {/* Up arrow */}
                 <path d="M3 21 L12 14 L15 16 L21 11" stroke="hsl(var(--accent))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
               </svg>
             </div>
-            {/* Pulse dot */}
-            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-primary rounded-full border-2 border-background animate-pulse shadow-[0_0_8px_hsl(var(--primary))]" />
           </div>
-          <div className="text-left">
-            <h1 className="text-base font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent text-glow">
+          <div className="text-left hidden sm:block">
+            <h1 className="text-sm font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
               MANDARIN
             </h1>
-            <p className="text-[10px] text-muted-foreground tracking-wider uppercase">Forex AI Тренер</p>
+            <p className="text-[9px] text-muted-foreground tracking-wider uppercase">Forex AI Тренер</p>
           </div>
         </button>
+
+        <TopNav />
 
         <div className="flex items-center gap-1.5">
           <button
@@ -540,23 +563,11 @@ const Index = () => {
             )}
           </button>
 
-          <button
-            onClick={() => setNotesOpen(true)}
-            className="btn-luxury relative flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-secondary/60 border border-border/60 text-foreground/80 hover:text-primary hover:border-primary/40 text-xs font-semibold"
-            aria-label="Тэмдэглэл"
-          >
-            <StickyNote className="w-3.5 h-3.5" />
-            {notes.length > 0 && (
-              <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] flex items-center justify-center">
-                {notes.length}
-              </span>
-            )}
-          </button>
-
           {messages.length > 0 && (
             <button
               onClick={startNewChat}
               className="btn-luxury relative group flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-gradient-to-br from-primary/15 to-accent/10 border border-primary/30 text-primary text-xs font-semibold overflow-hidden"
+              aria-label="Шинэ чат"
             >
               <Plus className="w-3.5 h-3.5 transition-transform group-hover:rotate-90 duration-500" />
               {sparkle && (
@@ -603,11 +614,11 @@ const Index = () => {
         <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain luxury-scroll">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-full px-5 pb-8">
-              <div className="w-full max-w-lg space-y-7">
+              <div className="w-full max-w-2xl space-y-7">
                 {/* Hero */}
                 <div className="text-center space-y-3 pt-8 animate-fade-up">
                   <div className="relative w-20 h-20 mx-auto mb-4">
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_50px_hsl(var(--primary)/0.6)] animate-star-pulse" />
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_50px_hsl(var(--primary)/0.6)]" />
                     <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-background via-secondary to-background border border-primary/40 flex items-center justify-center">
                       <CandlestickChart className="w-10 h-10 text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]" />
                     </div>
@@ -616,8 +627,23 @@ const Index = () => {
                     Юу мэдмээр байна?
                   </h2>
                   <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                    Forex-ийн талаар асуултаа бичээрэй эсвэл дуугаараа ярь. Анхан шатнаас ахисан түвшин хүртэл хамтдаа суралцана.
+                    Forex-ийн талаар асуултаа бичээрэй, зураг оруулаад шинжлүүлээрэй, эсвэл "зураг зурж өг" гэж хэлээрэй.
                   </p>
+                </div>
+
+                {/* Feature cards (Сургалт + бусад) */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 animate-fade-up">
+                  {FEATURE_CARDS.map((c) => (
+                    <Link
+                      key={c.to}
+                      to={c.to}
+                      className={`btn-luxury group relative overflow-hidden rounded-xl p-3 border border-border/60 bg-gradient-to-br ${c.color} hover:border-primary/50`}
+                    >
+                      <c.icon className="w-5 h-5 text-primary mb-2" />
+                      <div className="text-xs font-semibold">{c.title}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{c.desc}</div>
+                    </Link>
+                  ))}
                 </div>
 
                 {/* Quick Actions */}
@@ -626,7 +652,7 @@ const Index = () => {
                     <button
                       key={action.label}
                       onClick={() => sendMessage(action.message)}
-                      className="btn-luxury w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-card hover:border-primary/50 group text-left"
+                      className="btn-luxury w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-card hover:border-primary/50 group text-left"
                     >
                       <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
                         <action.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
@@ -650,16 +676,16 @@ const Index = () => {
                     }`}
                   >
                     {msg.role === "assistant" ? (
-                      <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-white [&_li]:text-white [&_li]:mb-1 [&_ul]:mb-3 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:mb-3 [&_ol]:pl-5 [&_ol]:list-decimal [&_h1]:text-white [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-white [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-primary [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_strong]:text-primary [&_strong]:font-bold [&_a]:text-accent [&_code]:text-primary [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-primary/50 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-white/80">
-                        <ReactMarkdown>{msg.content || "..."}</ReactMarkdown>
+                      <div className="prose prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0 [&_p]:mb-3 [&_p]:text-white [&_li]:text-white [&_li]:mb-1 [&_ul]:mb-3 [&_ul]:pl-5 [&_ul]:list-disc [&_ol]:mb-3 [&_ol]:pl-5 [&_ol]:list-decimal [&_h1]:text-white [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2 [&_h2]:text-white [&_h2]:text-base [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-primary [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5 [&_strong]:text-primary [&_strong]:font-bold [&_a]:text-accent [&_code]:text-primary [&_code]:bg-primary/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs [&_blockquote]:border-l-2 [&_blockquote]:border-primary/50 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:text-white/80 [&_img]:rounded-lg [&_img]:my-2 [&_img]:max-w-full">
+                        <ReactMarkdown>{(typeof msg.content === "string" ? msg.content : "") || "..."}</ReactMarkdown>
                       </div>
                     ) : (
-                      msg.content
+                      renderUserContent(msg)
                     )}
                   </div>
                 </div>
               ))}
-              {isLoading && messages[messages.length - 1]?.role === "user" && (
+              {(isLoading || generatingImage) && messages[messages.length - 1]?.role === "user" && (
                 <div className="flex justify-start">
                   <div className="py-3 px-4">
                     <div className="flex gap-1.5">
@@ -676,7 +702,7 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Input Area + Floating jump-down */}
+      {/* Input Area */}
       <div className="relative border-t border-border/50 bg-background/80 backdrop-blur-sm px-4 py-3 shrink-0">
         {showJumpDown && (
           <button
@@ -687,13 +713,42 @@ const Index = () => {
             <ArrowDown className="w-4 h-4" />
           </button>
         )}
+
+        {/* Attached image preview */}
+        {attachedImage && (
+          <div className="max-w-3xl mx-auto mb-2">
+            <div className="relative inline-block">
+              <img src={attachedImage} alt="" className="h-20 w-20 object-cover rounded-lg border border-primary/40" />
+              <button
+                onClick={() => setAttachedImage(null)}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                aria-label="Хасах"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
           <div className="flex gap-2 items-center">
+            <Button
+              type="button"
+              size="icon"
+              onClick={() => fileRef.current?.click()}
+              disabled={isLoading}
+              className="btn-luxury rounded-xl h-11 w-11 shrink-0 bg-secondary hover:bg-secondary/80 text-foreground border border-border/60"
+              aria-label="Зураг хавсаргах"
+            >
+              <ImageIcon className="w-4 h-4" />
+            </Button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickImage} />
+
             <Input
               ref={inputRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder={isListening ? "Сонсож байна..." : "Асуултаа бичнэ үү..."}
+              placeholder={isListening ? "Сонсож байна..." : attachedImage ? "Зургийн талаар асуу..." : "Асуултаа бичнэ үү... ('зураг зурж өг' гэж асуу)"}
               disabled={isLoading}
               className="bg-secondary/60 border-border/40 focus-visible:ring-primary/30 rounded-xl h-11 text-sm"
             />
@@ -714,10 +769,10 @@ const Index = () => {
             <Button
               type="submit"
               size="icon"
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || (!input.trim() && !attachedImage)}
               className="btn-luxury rounded-xl h-11 w-11 shrink-0"
             >
-              <Send className="w-4 h-4" />
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
             </Button>
           </div>
           <p className="text-[10px] text-muted-foreground/60 mt-2 text-center">
@@ -742,6 +797,7 @@ const Index = () => {
               <button
                 onClick={() => setHistoryOpen(false)}
                 className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center transition-colors"
+                aria-label="Хаах"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -805,167 +861,7 @@ const Index = () => {
         </>
       )}
 
-      {/* Notes Drawer */}
-      {notesOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-background/70 backdrop-blur-sm z-40 animate-fade-in"
-            onClick={() => { setNotesOpen(false); setOpenedNoteId(null); setEditingNoteId(null); }}
-          />
-          <aside className="fixed right-0 top-0 h-screen w-full sm:w-[400px] bg-card/95 backdrop-blur-xl border-l border-primary/20 z-50 flex flex-col shadow-[0_0_60px_hsl(var(--primary)/0.3)] animate-slide-in-right">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border/40">
-              <div className="flex items-center gap-2">
-                <StickyNote className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-bold tracking-tight">
-                  {openedNote ? "Тэмдэглэл" : "Миний тэмдэглэл"}
-                </h3>
-              </div>
-              <button
-                onClick={() => {
-                  if (openedNote) { setOpenedNoteId(null); setEditingNoteId(null); }
-                  else setNotesOpen(false);
-                }}
-                className="w-8 h-8 rounded-lg hover:bg-secondary flex items-center justify-center transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Opened note view */}
-            {openedNote ? (
-              <div className="flex-1 overflow-y-auto luxury-scroll p-4">
-                <div
-                  className="rounded-2xl p-5 shadow-[0_8px_32px_-8px_hsl(var(--primary)/0.4)]"
-                  style={{
-                    backgroundColor: `hsl(${openedNote.color})`,
-                  }}
-                >
-                  {editingNoteId === openedNote.id ? (
-                    <div className="space-y-3">
-                      <Input
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        placeholder="Гарчиг"
-                        className="bg-white/20 border-white/30 text-white placeholder:text-white/60 font-bold"
-                      />
-                      <Textarea
-                        value={editText}
-                        onChange={(e) => setEditText(e.target.value)}
-                        className="bg-white/20 border-white/30 text-white placeholder:text-white/60 min-h-[200px] resize-none"
-                      />
-                      <Button onClick={saveEditNote} size="sm" className="w-full bg-white text-foreground hover:bg-white/90 gap-2">
-                        <Check className="w-4 h-4" /> Хадгалах
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <h4 className="text-lg font-bold text-white mb-3 leading-snug">
-                        {openedNote.title}
-                      </h4>
-                      <p className="text-sm text-white/95 whitespace-pre-wrap leading-relaxed">
-                        {openedNote.text}
-                      </p>
-                      <p className="text-[10px] text-white/70 mt-4">
-                        {new Date(openedNote.createdAt).toLocaleString("mn-MN")}
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                {/* Color picker + actions */}
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-xs text-muted-foreground">Өнгө сонгох</span>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {NOTE_COLORS.map((c) => (
-                      <button
-                        key={c.value}
-                        onClick={() => updateNoteColor(openedNote.id, c.value)}
-                        className={`w-8 h-8 rounded-full transition-all ${
-                          openedNote.color === c.value ? "ring-2 ring-foreground ring-offset-2 ring-offset-card scale-110" : "hover:scale-110"
-                        }`}
-                        style={{ backgroundColor: `hsl(${c.value})` }}
-                        aria-label={c.name}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      onClick={() => editingNoteId === openedNote.id ? saveEditNote() : startEditNote(openedNote)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-2"
-                    >
-                      {editingNoteId === openedNote.id ? <><Check className="w-4 h-4" /> Хадгалах</> : <><Pencil className="w-4 h-4" /> Засах</>}
-                    </Button>
-                    <Button
-                      onClick={() => removeNote(openedNote.id)}
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 gap-2 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30"
-                    >
-                      <Trash2 className="w-4 h-4" /> Устгах
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Add note form */}
-                <div className="p-4 border-b border-border/40 space-y-2">
-                  <Textarea
-                    value={newNote}
-                    onChange={(e) => setNewNote(e.target.value)}
-                    placeholder="Чухал гэж бодсон зүйлээ энд тэмдэглэ... (эхний мөр гарчиг болно)"
-                    className="bg-secondary/60 border-border/40 focus-visible:ring-primary/30 rounded-lg text-sm min-h-[90px] resize-none"
-                  />
-                  <Button
-                    onClick={addNote}
-                    disabled={!newNote.trim()}
-                    className="btn-luxury w-full rounded-lg gap-2"
-                    size="sm"
-                  >
-                    <Save className="w-4 h-4" />
-                    Тэмдэглэл хадгалах
-                  </Button>
-                </div>
-
-                {/* Notes grid */}
-                <div className="flex-1 overflow-y-auto luxury-scroll p-3">
-                  {notes.length === 0 ? (
-                    <div className="text-center py-12 text-xs text-muted-foreground">
-                      <StickyNote className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                      Хоосон байна. Эхний тэмдэглэлээ нэмээрэй.
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-2.5">
-                      {notes.map((note) => (
-                        <button
-                          key={note.id}
-                          onClick={() => setOpenedNoteId(note.id)}
-                          className="btn-luxury group relative rounded-xl p-3 text-left aspect-square shadow-[0_4px_16px_-4px_hsl(var(--primary)/0.3)] hover:shadow-[0_8px_24px_-4px_hsl(var(--primary)/0.5)] hover:-translate-y-0.5 transition-all overflow-hidden"
-                          style={{ backgroundColor: `hsl(${note.color})` }}
-                        >
-                          <h4 className="text-sm font-bold text-white leading-tight line-clamp-3">
-                            {note.title}
-                          </h4>
-                          <p className="absolute bottom-2 left-3 text-[9px] text-white/70">
-                            {new Date(note.createdAt).toLocaleDateString("mn-MN")}
-                          </p>
-                          <StickyNote className="absolute top-2 right-2 w-3.5 h-3.5 text-white/50" />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </aside>
-        </>
-      )}
+      <MobileNav />
     </div>
   );
 };
