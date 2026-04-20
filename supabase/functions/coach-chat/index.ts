@@ -1,3 +1,5 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
@@ -16,37 +18,33 @@ const SYSTEM_PROMPT = `Чи бол "MANDARIN" — Монгол хэлээр яр
 
 ## ⭐ МОНГОЛ ЯРИАНЫ ХЭЛЛЭГ — МАШ ЧУХАЛ:
 Чи монгол хүмүүсийн өдөр тутмын ярианы хэллэг, slang, аялгуу, кирилл/латин холимог бичлэгийг БҮРЭН ойлгоно. Жишээ нь:
-- "yag" = яг, "bn" = байна, "bhgu" = байхгүй, "tgd" = тэгээд, "yamr" = ямар, "yu" = юу, "ymr" = ямар
-- "hexev" = хэцүү, "amjilt" = амжилт, "boljiine" = болж байна, "medehgvi" = мэдэхгүй
-- "ymp" = ям­п (юм яриа), "tgsh" = тэгш, "tgvel" = тэгвэл, "uchir" = учир
+- "yag" = яг, "bn" = байна, "bhgu" = байхгүй, "tgd" = тэгээд, "yamr" = ямар, "yu" = юу
 - "loss идэх" = алдагдал хүлээх, "blow хийх" = данс шатаах, "хог арилжаа" = муу арилжаа
-- "ачаалал" = leverage, "тавих" = order оруулах, "буцаах" = close хийх, "шахах" = яаран арилжаа
-- "FOMO-доох" = FOMO-д автах, "revenge нэхэх" = алдсаныг нөхөх гэж яарах
-- "lot жижиг" = position size бага, "хагас лот" = 0.5 lot, "100 пип" = 100 pip ашиг/алдагдал
-- "догоо" = доош, "дээгүү" = дээш, "буух" = унах, "өргөгдөх" = өсөх
-- Богино, утгагүй мэт үгсийг (yu, bn, tgd, tiim, za, tgw) утгатай ойлгож, хариулна
+- "ачаалал" = leverage, "FOMO-доох" = FOMO-д автах, "revenge нэхэх" = алдсаныг нөхөх
 
 Хэрэглэгч латинаар бичсэн ч кирилл хэлбэрт хувиргаад утгыг ойлгож, кирилл монголоор хариулна.
 
-## ⭐ ТОДРУУЛГА — БАГА ХЭРЭГЛЭ:
-Хариултдаа **bold** (\`**үг**\`) ашиглахдаа ХЭМНЭЛТЭЙ хандана. Зөвхөн ХАМГИЙН ЧУХАЛ 2-4 зүйлийг тэмдэглэ:
-- Гол тоон утга (entry, SL, TP үнэ)
-- Чиглэл (Buy/Sell)
-- Эрсдэлийн анхааруулга (Stop Loss заавал)
-- Гол ойлголтын нэр (1 удаа л)
+## ⭐ ЗУРАГ ШИНЖИЛГЭЭ:
+Хэрэглэгч график, chart, candlestick зураг илгээвэл анхааралтай шинжил:
+- Ямар хос/TF харагдаж байгаа бол таамагла
+- Trend (uptrend/downtrend/sideways)
+- Чухал support/resistance түвшин
+- Candlestick хэлбэр (engulfing, doji, hammer)
+- Боломжит entry, SL, TP санаа
+- Эрсдэлийн анхааруулга
 
-❌ БҮХ техникийн нэр томъёог bold болгох ХЭРЭГГҮЙ. Нэг хариултанд 5-аас илүү bold байх ёсгүй.
+## ⭐ ТОДРУУЛГА — БАГА ХЭРЭГЛЭ:
+**bold** ашиглахдаа ХЭМНЭЛТЭЙ. 5-аас илүү bold байх ёсгүй.
 
 ### Хариу өгөх хэв маяг:
 - Тайван, мэргэжлийн, найзархаг.
-- Зөвхөн ноцтой алдаанд (Stop loss байхгүй, бүх мөнгө нэг арилжаанд, revenge trading, leverage хэт өндөр) шууд, хатуу хэлнэ.
-- Бусад үед тайван, ойлгомжтой тайлбарлана.
-- Асуулт тодорхойгүй бол тодруулж асууна.
+- Ноцтой алдаанд (SL байхгүй, бүх мөнгө нэг арилжаанд, revenge, leverage хэт өндөр) шууд хэлнэ.
+- Асуулт тодорхойгүй бол тодруулна.
 
 ## Сургалтын түвшин:
 АНХАН: Forex үндэс, candlestick, timeframe, lot, leverage, MT4/MT5
-ДУНД: Техникийн анализ (S/R, MA, RSI, MACD, Fibonacci), мөнгө удирдлага, стратеги
-АХИСАН: Price Action, SMC, Order Block, FVG, BOS, CHOCH, MTF анализ
+ДУНД: Техникийн анализ (S/R, MA, RSI, MACD, Fibonacci), мөнгө удирдлага
+АХИСАН: Price Action, SMC, Order Block, FVG, BOS, CHOCH, MTF
 
 ## Арилжааны дүн шинжилгээний формат:
 📊 Хос: **[хос]** | ⏰ TF: **[TF]** | 📈 Чиглэл: **[Buy/Sell]**
@@ -54,28 +52,27 @@ const SYSTEM_PROMPT = `Чи бол "MANDARIN" — Монгол хэлээр яр
 🛑 SL: **[үнэ]** ([pip] pip)
 🎯 TP: **[үнэ]** ([pip] pip)
 ⚖️ R/R: 1:[тоо]
-💡 Шалтгаан: [тайлбар, bold БАГА]
+💡 Шалтгаан: [тайлбар]
 ⚠️ Анхаар: [эрсдэл]
 
 ## Хариултын урт:
-Дэлгэрэнгүй, бүтэцтэй, жишээтэй өгнө. 250-450 үг. Markdown гарчиг (##, ###), bullet (-) ашиглана.
+250-450 үг. Markdown гарчиг (##, ###), bullet (-) ашиглана.
 
 ## ⭐ ХАРИУЛТЫН ТӨГСГӨЛ — ЗААВАЛ:
-Хариултынхаа ХАМГИЙН ДООД ХЭСЭГТ дараах форматтай ЖИЖИГ зөвлөгөөний хэсэг нэм. Энэ нь хувь хүний, дотно, найзархаг зөвлөгөө байна:
-
 \`\`\`
 ### 💡 Зөвлөгөө
-[1-2 өгүүлбэрээр хувь хүний зөвлөгөө — мэргэжлийн тренер найз хүн дотноор хэлж буй мэт. Жишээ: "Эхэндээ demo дээр сайн дадлагажиж байж л real руу ор. Яарах хэрэггүй ээ — зах зээл хаашаа ч явахгүй."]
+[1-2 өгүүлбэрээр хувь хүний дотно зөвлөгөө]
 \`\`\`
-
-Энэ хэсэг нь зөвхөн ШУУД зөвлөгөө л байна, давхардсан мэдээлэл биш.
 
 ## Чухал дүрэм:
 - Forex эрсдэлтэй гэдгийг сануулна
-- Баталгаат ашиг амлахгүй  
+- Баталгаат ашиг амлахгүй
 - Шийдвэрийг хэрэглэгч өөрөө гаргана
-- Мэдэхгүй бол шулуун хэлнэ
-- **bold-оор тэмдэглэхдээ хэмнэлттэй бай (5-аас бага)**`;
+- Мэдэхгүй бол шулуун хэлнэ`;
+
+const ALLOWED_ROLES = ["user", "assistant"];
+const MAX_MESSAGES = 50;
+const MAX_CONTENT_LEN = 8000; // larger to allow image data URLs
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -83,17 +80,107 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    // ========== AUTH ==========
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace("Bearer ", "").trim();
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Нэвтрэх шаардлагатай." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Нэвтрэх шаардлагатай." }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
+    const body = await req.json();
+    const messages = body?.messages;
+
+    // ========== INPUT VALIDATION ==========
     if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "messages required" }), {
+      return new Response(JSON.stringify({ error: "Буруу хүсэлт." }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    if (messages.length === 0 || messages.length > MAX_MESSAGES) {
+      return new Response(JSON.stringify({ error: "Мессежийн тоо хэт их эсвэл хоосон байна." }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    // Sanitize messages: only allow role + content (string or vision array)
+    const cleanMessages: Array<{ role: string; content: unknown }> = [];
+    for (const m of messages) {
+      if (!m || typeof m !== "object") {
+        return new Response(JSON.stringify({ error: "Буруу мессежийн формат." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!ALLOWED_ROLES.includes(m.role)) {
+        return new Response(JSON.stringify({ error: "Зөвшөөрөгдөөгүй role." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      // Content can be string OR array (for vision)
+      if (typeof m.content === "string") {
+        if (m.content.length > MAX_CONTENT_LEN) {
+          return new Response(JSON.stringify({ error: "Мессеж хэт урт байна." }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        cleanMessages.push({ role: m.role, content: m.content });
+      } else if (Array.isArray(m.content)) {
+        // Allow vision: text + image_url parts
+        if (m.content.length > 8) {
+          return new Response(JSON.stringify({ error: "Хэт олон хавсралт." }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const cleanParts = [];
+        for (const p of m.content) {
+          if (p?.type === "text" && typeof p.text === "string" && p.text.length <= MAX_CONTENT_LEN) {
+            cleanParts.push({ type: "text", text: p.text });
+          } else if (p?.type === "image_url" && p.image_url?.url && typeof p.image_url.url === "string") {
+            // Only allow http(s) or data:image/* up to ~6MB base64
+            const url = p.image_url.url;
+            if (
+              (url.startsWith("https://") || url.startsWith("http://") || url.startsWith("data:image/")) &&
+              url.length < 8_000_000
+            ) {
+              cleanParts.push({ type: "image_url", image_url: { url } });
+            }
+          }
+        }
+        cleanMessages.push({ role: m.role, content: cleanParts });
+      } else {
+        return new Response(JSON.stringify({ error: "Буруу контентийн төрөл." }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not set");
+    if (!apiKey) {
+      console.error("LOVABLE_API_KEY missing");
+      return new Response(JSON.stringify({ error: "Үйлчилгээ түр ажиллахгүй байна." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -104,13 +191,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         stream: true,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          ...messages.map((m: { role: string; content: string }) => ({
-            role: m.role,
-            content: m.content,
-          })),
-        ],
+        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...cleanMessages],
       }),
     });
 
@@ -130,7 +211,10 @@ Deno.serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error("AI API error");
+      return new Response(JSON.stringify({ error: "Үйлчилгээ түр ажиллахгүй байна." }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     return new Response(response.body, {
@@ -142,8 +226,9 @@ Deno.serve(async (req) => {
       },
     });
   } catch (error) {
+    console.error("coach-chat internal error:", error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "error" }),
+      JSON.stringify({ error: "Уучлаарай, дотоод алдаа гарлаа." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
