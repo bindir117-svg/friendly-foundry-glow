@@ -148,18 +148,5 @@
     box-shadow: 0 0 16px hsl(330 85% 60% / 0.8);
   }
 
-  /* Logo animations */
-  @keyframes logo-orbit { to { transform: rotate(360deg); } }
-  @keyframes logo-ring {
-    0%, 100% { transform: scale(1); opacity: 0.5; }
-    50% { transform: scale(1.18); opacity: 0.9; }
-  }
-  @keyframes logo-shimmer {
-    0%, 100% { opacity: 0.4; transform: translateX(-100%); }
-    50% { opacity: 0.9; }
-    100% { transform: translateX(100%); }
-  }
-  .logo-orbit { animation: logo-orbit 10s linear infinite; }
-  .logo-ring { animation: logo-ring 3s ease-in-out infinite; }
-  .logo-shimmer { animation: logo-shimmer 3s ease-in-out infinite; }
+  /* Logo animations removed — static logo */
 }
