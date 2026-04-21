@@ -51,7 +51,7 @@ export const PageShell = ({ title, children, showBack }: Props) => {
               <CandlestickChart className="w-5 h-5 text-primary-foreground" />
             </div>
             <span className="font-bold text-sm tracking-tight bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              MANDARIN
+              MNDRIN
             </span>
           </Link>
           {title && <h1 className="text-sm md:text-base font-semibold truncate ml-3 text-muted-foreground">— {title}</h1>}

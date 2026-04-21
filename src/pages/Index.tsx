@@ -541,7 +541,7 @@ const Index = () => {
           </div>
           <div className="text-left hidden sm:block">
             <h1 className="text-sm font-bold tracking-tight bg-gradient-to-r from-primary via-accent to-primary-glow bg-clip-text text-transparent">
-              MANDARIN
+              MNDRIN
             </h1>
             <p className="text-[9px] text-muted-foreground tracking-wider uppercase">Forex AI Тренер</p>
           </div>
