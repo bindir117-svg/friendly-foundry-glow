@@ -96,28 +96,43 @@ const Analyze = () => {
 
   return (
     <PageShell title="График шинжилгээ">
-      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
-        <div>
+      <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-6 animate-fade-in">
+        <div className="animate-slide-in-bottom">
           <h2 className="text-2xl md:text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             График / Chart шинжилгээ
           </h2>
           <p className="text-muted-foreground text-sm">
             Графикийн screenshot оруулаад AI-аар шинжлүүл — trend, S/R, entry санаа.
           </p>
+          {/* Color legend */}
+          <div className="flex flex-wrap gap-2 mt-3 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-bull/15 text-bull border border-bull/30">
+              <span className="w-2 h-3 bg-bull rounded-sm" /> Bull (өсөлт)
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-bear/15 text-bear border border-bear/30">
+              <span className="w-2 h-3 bg-bear rounded-sm" /> Bear (уналт)
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-info/15 text-info border border-info/30">
+              <span className="w-2 h-2 rounded-full bg-info" /> Indicator
+            </span>
+            <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full bg-violet/15 text-violet border border-violet/30">
+              <span className="w-2 h-2 rounded-full bg-violet-token" /> Advanced
+            </span>
+          </div>
         </div>
 
-        <Card className="p-4 md:p-6 bg-card/60 backdrop-blur-xl border-border/50 space-y-4">
+        <Card className="p-4 md:p-6 bg-card/70 backdrop-blur-xl border-border/50 space-y-4 animate-elastic">
           {!imageData ? (
             <button
               onClick={() => fileRef.current?.click()}
-              className="w-full border-2 border-dashed border-border/60 rounded-xl py-12 hover:border-primary/50 hover:bg-primary/5 transition-colors flex flex-col items-center gap-2"
+              className="w-full border-2 border-dashed border-border/60 rounded-xl py-12 hover:border-primary/50 hover:bg-primary/5 transition-colors flex flex-col items-center gap-2 group"
             >
-              <Upload className="w-8 h-8 text-muted-foreground" />
+              <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
               <p className="text-sm font-medium">Графикийн зураг сонгох</p>
               <p className="text-xs text-muted-foreground">PNG, JPG (5MB хүртэл)</p>
             </button>
           ) : (
-            <div className="relative">
+            <div className="relative animate-fade-in">
               <img src={imageData} alt="Chart" className="w-full rounded-lg max-h-96 object-contain bg-secondary/40" />
               <Button
                 size="icon"
@@ -149,7 +164,7 @@ const Analyze = () => {
           <Button
             onClick={analyze}
             disabled={!imageData || loading}
-            className="w-full bg-gradient-to-r from-primary to-accent shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
+            className="w-full bg-gradient-to-r from-primary to-accent btn-luxury shadow-[0_0_20px_hsl(var(--primary)/0.4)]"
           >
             {loading ? (
               <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Шинжилж байна...</>
@@ -160,8 +175,8 @@ const Analyze = () => {
         </Card>
 
         {analysis && (
-          <Card className="p-4 md:p-6 bg-card/60 backdrop-blur-xl border-primary/40">
-            <article className="prose prose-invert prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-primary">
+          <Card className="p-4 md:p-6 bg-card/70 backdrop-blur-xl border-primary/40 animate-fade-up">
+            <article className="prose prose-invert prose-sm max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-primary prose-code:text-info prose-code:bg-secondary prose-code:px-1 prose-code:rounded">
               <ReactMarkdown>{analysis}</ReactMarkdown>
             </article>
           </Card>

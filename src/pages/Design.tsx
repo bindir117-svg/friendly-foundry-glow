@@ -79,7 +79,7 @@ const Design = () => {
   const download = (url: string) => {
     const a = document.createElement("a");
     a.href = url;
-    a.download = `mandarin-${Date.now()}.png`;
+    a.download = `mndrin-${Date.now()}.png`;
     a.click();
   };
 

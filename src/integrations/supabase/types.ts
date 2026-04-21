@@ -164,6 +164,7 @@ export type Database = {
       }
       notes: {
         Row: {
+          bg_color: string
           content: string
           created_at: string
           id: string
@@ -173,6 +174,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bg_color?: string
           content?: string
           created_at?: string
           id?: string
@@ -182,6 +184,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bg_color?: string
           content?: string
           created_at?: string
           id?: string
@@ -221,6 +224,83 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      quiz_attempts: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          passed: boolean
+          score: number
+          total: number
+          user_id: string
+          wrong_lesson_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          passed?: boolean
+          score: number
+          total: number
+          user_id: string
+          wrong_lesson_ids?: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          passed?: boolean
+          score?: number
+          total?: number
+          user_id?: string
+          wrong_lesson_ids?: string[]
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          correct_index: number
+          created_at: string
+          explanation: string | null
+          id: string
+          lesson_id: string | null
+          level: string
+          options: Json
+          order_index: number
+          question: string
+        }
+        Insert: {
+          correct_index: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          lesson_id?: string | null
+          level: string
+          options: Json
+          order_index?: number
+          question: string
+        }
+        Update: {
+          correct_index?: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          lesson_id?: string | null
+          level?: string
+          options?: Json
+          order_index?: number
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
