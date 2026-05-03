@@ -228,32 +228,27 @@ const Notes = () => {
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {notes.map((n, i) => (
-            <Card
+            <button
               key={n.id}
-              className={cn(
-                "p-4 border-border/50 hover:border-primary/50 transition-all cursor-pointer group animate-fade-up",
-                "hover:shadow-[0_0_24px_hsl(var(--primary)/0.25)] hover:-translate-y-0.5",
-              )}
-              style={{ backgroundColor: n.bg_color || "#0a0a0a", animationDelay: `${i * 30}ms`, animationFillMode: "both" }}
               onClick={() => openNote(n)}
+              className="group relative bg-primary text-primary-foreground rounded-xl p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_hsl(var(--primary)/0.5)] animate-fade-up overflow-hidden"
+              style={{ animationDelay: `${i * 30}ms`, animationFillMode: "both" }}
             >
-              <div className="flex items-start justify-between mb-2 gap-2">
-                <h3 className="font-semibold text-sm line-clamp-1 text-foreground">{n.title}</h3>
-                <button
-                  onClick={(e) => { e.stopPropagation(); remove(n.id); }}
-                  className="text-foreground/50 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative flex items-start justify-between gap-2">
+                <h3 className="font-bold text-sm line-clamp-2 flex-1">{n.title}</h3>
+                <span
+                  role="button"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); remove(n.id); }}
+                  className="text-primary-foreground/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                </span>
               </div>
-              {n.image_urls?.[0] && (
-                <img src={n.image_urls[0]} alt="" className="w-full aspect-video object-cover rounded mb-2" />
-              )}
-              <p className="text-xs text-foreground/70 line-clamp-3">{n.content}</p>
-              <p className="text-[10px] text-foreground/40 mt-2">
-                {format(new Date(n.updated_at), "yyyy-MM-dd HH:mm")}
+              <p className="relative text-[10px] text-primary-foreground/70 mt-2">
+                {format(new Date(n.updated_at), "MM-dd HH:mm")}
               </p>
-            </Card>
+            </button>
           ))}
         </div>
       </div>
