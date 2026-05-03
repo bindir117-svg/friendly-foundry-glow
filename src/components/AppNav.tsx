@@ -1,12 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, User, BookOpen, Palette, ImageIcon, StickyNote } from "lucide-react";
+import { Home, User, BookOpen, MessageSquare, StickyNote } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
   { to: "/", label: "Нүүр", icon: Home },
+  { to: "/chat", label: "Чат", icon: MessageSquare },
   { to: "/learn", label: "Сургалт", icon: BookOpen },
-  { to: "/design", label: "Дизайн", icon: Palette },
-  { to: "/analyze", label: "График шинжилгээ", icon: ImageIcon },
   { to: "/notes", label: "Тэмдэглэл", icon: StickyNote },
   { to: "/profile", label: "Профайл", icon: User },
 ];

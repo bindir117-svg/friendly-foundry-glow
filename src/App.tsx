@@ -12,6 +12,7 @@ import Learn from "./pages/Learn.tsx"; // Зөвхөн нэг удаа дууд�
 import Design from "./pages/Design.tsx";
 import Analyze from "./pages/Analyze.tsx";
 import Notes from "./pages/Notes.tsx";
+import Chat from "./pages/Chat.tsx";
 import { AuthProvider } from "./hooks/useAuth";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/design" element={<ProtectedRoute><Design /></ProtectedRoute>} />
             <Route path="/analyze" element={<ProtectedRoute><Analyze /></ProtectedRoute>} />
             <Route path="/notes" element={<ProtectedRoute><Notes /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
             
             {/* Бусад зам */}
