@@ -22,14 +22,11 @@ interface Note {
 }
 
 const PRESET_COLORS = [
-  { name: "Хар", value: "#0a0a0a" },
-  { name: "Бараан саарал", value: "#171717" },
-  { name: "Шөнийн ягаан", value: "#2a0a1a" },
-  { name: "Нил ягаан", value: "#1a0a2a" },
   { name: "Цэнхэр", value: "#0a1a2e" },
   { name: "Ногоон", value: "#0a2018" },
-  { name: "Шар хүрэн", value: "#2a1f0a" },
-  { name: "Бургунд", value: "#2a0a14" },
+  { name: "Шар", value: "#2a1f0a" },
+  { name: "Улаан", value: "#2a0a14" },
+  { name: "Ягаан", value: "#2a0a1f" },
 ];
 
 const Notes = () => {
@@ -186,17 +183,6 @@ const Notes = () => {
                     style={{ backgroundColor: c.value }}
                   />
                 ))}
-                <label className="relative w-8 h-8 rounded-full border-2 border-foreground/20 overflow-hidden cursor-pointer hover:scale-110 transition-transform" title="Өөр өнгө">
-                  <input
-                    type="color"
-                    value={bgColor}
-                    onChange={(e) => setBgColor(e.target.value)}
-                    className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
-                  />
-                  <div className="w-full h-full" style={{
-                    background: "conic-gradient(from 0deg, #ff007f, #ffff00, #00ff7f, #00ffff, #007fff, #ff00ff, #ff007f)"
-                  }} />
-                </label>
               </div>
             </div>
 
