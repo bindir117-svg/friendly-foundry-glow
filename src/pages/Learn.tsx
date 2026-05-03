@@ -402,6 +402,9 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; total: number; passed: boolean; wrongIds: string[] } | null>(null);
@@ -427,7 +430,6 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
         setQuestions(data as QuizQuestion[]);
         setLoading(false);
       } else {
-        // Generate via edge function
         setGenerating(true);
         try {
           const { data: { session } } = await supabase.auth.getSession();
@@ -457,19 +459,12 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
     })();
   }, [level]);
 
-  const submit = async () => {
-    if (Object.keys(answers).length < questions.length) {
-      toast({ title: "Бүх асуултанд хариулна уу", variant: "destructive" });
-      return;
-    }
+  const finalize = async (allAnswers: Record<string, number>) => {
     let score = 0;
     const wrongLessons: string[] = [];
     for (const q of questions) {
-      if (answers[q.id] === q.correct_index) {
-        score++;
-      } else if (q.lesson_id) {
-        wrongLessons.push(q.lesson_id);
-      }
+      if (allAnswers[q.id] === q.correct_index) score++;
+      else if (q.lesson_id) wrongLessons.push(q.lesson_id);
     }
     const passed = score === questions.length;
     setResult({ score, total: questions.length, passed, wrongIds: [...new Set(wrongLessons)] });
@@ -477,13 +472,29 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
     if (passed) fireCelebration();
     if (user) {
       await supabase.from("quiz_attempts").insert({
-        user_id: user.id,
-        level,
-        score,
-        total: questions.length,
-        passed,
+        user_id: user.id, level, score, total: questions.length, passed,
         wrong_lesson_ids: [...new Set(wrongLessons)],
       });
+    }
+  };
+
+  const handleNext = () => {
+    if (selected === null) return;
+    const q = questions[currentIdx];
+    const newAnswers = { ...answers, [q.id]: selected };
+    setAnswers(newAnswers);
+
+    if (!revealed) {
+      setRevealed(true);
+      return;
+    }
+    // move forward
+    if (currentIdx + 1 >= questions.length) {
+      finalize(newAnswers);
+    } else {
+      setCurrentIdx(currentIdx + 1);
+      setSelected(null);
+      setRevealed(false);
     }
   };
 
@@ -491,6 +502,9 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
     setAnswers({});
     setSubmitted(false);
     setResult(null);
+    setCurrentIdx(0);
+    setSelected(null);
+    setRevealed(false);
   };
 
   if (loading || generating) {
@@ -521,30 +535,61 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
   // Result screen
   if (submitted && result) {
     const wrongLessonsObjs = lessons.filter((l) => result.wrongIds.includes(l.id));
+    const wrongQuestions = questions.filter((q) => answers[q.id] !== q.correct_index);
     return (
       <PageShell title="Үр дүн">
         <div className="max-w-2xl mx-auto p-4 md:p-8 space-y-6 animate-fade-in">
           <Card className={cn(
-            "p-8 text-center bg-card/70 backdrop-blur-xl animate-elastic border-2",
+            "p-8 text-center bg-card/70 backdrop-blur-xl animate-elastic border-2 relative overflow-hidden",
             result.passed ? "border-gold/60 shadow-[0_0_60px_hsl(var(--gold)/0.3)]" : "border-bear/40",
           )}>
-            {result.passed ? (
-              <>
-                <Trophy className="w-20 h-20 mx-auto text-gold mb-4 animate-glow-pulse" />
-                <h2 className="text-4xl font-bold mb-2 text-shimmer">100% Mastery!</h2>
-                <p className="text-muted-foreground mb-2">{LEVEL_LABEL[level]} түвшнийг бүрэн эзэмшсэн.</p>
-                <p className="text-2xl font-bold text-bull">{result.score} / {result.total}</p>
-                <p className="text-sm text-muted-foreground mt-3">Дараагийн түвшин нээгдлээ! 🎉</p>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="w-20 h-20 mx-auto text-bear mb-4" />
-                <h2 className="text-3xl font-bold mb-2">Дахин оролдоорой</h2>
-                <p className="text-2xl font-bold text-bear">{result.score} / {result.total}</p>
-                <p className="text-sm text-muted-foreground mt-2">Зөвхөн <span className="text-primary font-semibold">100%</span> авч дараагийн түвшинд гарна.</p>
-              </>
-            )}
+            <div className={cn(
+              "absolute inset-0 opacity-30",
+              result.passed ? "bg-gradient-to-br from-gold/30 via-primary/20 to-transparent" : "bg-gradient-to-br from-bear/20 to-transparent",
+            )} />
+            <div className="relative">
+              {result.passed ? (
+                <>
+                  <Trophy className="w-20 h-20 mx-auto text-gold mb-4 animate-glow-pulse" />
+                  <h2 className="text-4xl font-bold mb-2 text-shimmer">100% Mastery!</h2>
+                  <p className="text-muted-foreground mb-3">{LEVEL_LABEL[level]} түвшнийг бүрэн эзэмшсэн.</p>
+                  <div className="text-5xl font-black text-bull mb-2">{result.score} / {result.total}</div>
+                  <p className="text-sm text-muted-foreground">Дараагийн түвшин нээгдлээ! 🎉</p>
+                </>
+              ) : (
+                <>
+                  <AlertCircle className="w-20 h-20 mx-auto text-bear mb-4" />
+                  <h2 className="text-3xl font-bold mb-2">Дахин оролдоорой</h2>
+                  <div className="text-5xl font-black text-bear mb-2">{result.score} / {result.total}</div>
+                  <p className="text-sm text-muted-foreground">Зөвхөн <span className="text-primary font-semibold">100%</span> авч дараагийн түвшинд гарна.</p>
+                </>
+              )}
+            </div>
           </Card>
+
+          {wrongQuestions.length > 0 && (
+            <Card className="p-5 bg-card/70 border-bear/40 animate-fade-up">
+              <h3 className="font-semibold mb-3 flex items-center gap-2 text-bear">
+                <AlertCircle className="w-4 h-4" /> Алдсан асуултууд ({wrongQuestions.length})
+              </h3>
+              <div className="space-y-3">
+                {wrongQuestions.map((q, qi) => (
+                  <div key={q.id} className="p-3 rounded-lg border border-border/40 bg-background/40">
+                    <p className="text-sm font-medium mb-2">{qi + 1}. {q.question}</p>
+                    <p className="text-xs text-bear mb-1">
+                      <span className="font-semibold">Таны хариу:</span> {q.options[answers[q.id]] ?? "—"}
+                    </p>
+                    <p className="text-xs text-bull mb-2">
+                      <span className="font-semibold">Зөв хариу:</span> {q.options[q.correct_index]}
+                    </p>
+                    {q.explanation && (
+                      <p className="text-xs text-muted-foreground italic">{q.explanation}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {!result.passed && wrongLessonsObjs.length > 0 && (
             <Card className="p-5 bg-card/70 border-info/40 animate-fade-up">
@@ -582,61 +627,89 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
     );
   }
 
-  const answeredCount = Object.keys(answers).length;
+  // ===== ONE QUESTION AT A TIME =====
+  const q = questions[currentIdx];
+  const isCorrect = revealed && selected === q.correct_index;
+  const isWrong = revealed && selected !== q.correct_index;
 
   return (
     <PageShell title="Шалгалт">
-      <div className="max-w-3xl mx-auto p-4 md:p-8 space-y-6 animate-fade-in">
+      <div className="max-w-2xl mx-auto p-4 md:p-8 space-y-6 animate-fade-in">
         <div className="flex items-center justify-between gap-4">
           <Button variant="ghost" size="sm" onClick={() => onClose(false)}>
             <ArrowLeft className="w-4 h-4 mr-2" /> Гарах
           </Button>
-          <div className="text-xs text-muted-foreground">
-            <Badge className={LEVEL_BADGE[level]} variant="outline">{LEVEL_LABEL[level]}</Badge>
-            <span className="ml-2">{answeredCount}/{questions.length}</span>
+          <Badge className={LEVEL_BADGE[level]} variant="outline">{LEVEL_LABEL[level]}</Badge>
+        </div>
+
+        <div>
+          <div className="flex justify-between text-xs mb-1.5">
+            <span className="text-muted-foreground">Асуулт {currentIdx + 1} / {questions.length}</span>
+            <span className="font-semibold text-primary">{Math.round(((currentIdx + (revealed ? 1 : 0)) / questions.length) * 100)}%</span>
           </div>
+          <Progress value={((currentIdx + (revealed ? 1 : 0)) / questions.length) * 100} className="h-1.5" />
         </div>
 
-        <Progress value={(answeredCount / questions.length) * 100} className="h-1.5" />
+        <Card key={q.id} className="p-6 bg-card/70 border-border/50 animate-elastic">
+          <p className="font-semibold text-base md:text-lg mb-5 leading-relaxed">{q.question}</p>
+          <div className="space-y-2.5">
+            {q.options.map((opt, oi) => {
+              const isSelected = selected === oi;
+              const isCorrectAnswer = oi === q.correct_index;
+              let style = "border-border/40 hover:border-primary/40 hover:bg-secondary/40";
+              if (revealed) {
+                if (isCorrectAnswer) style = "border-bull bg-bull/15 text-bull";
+                else if (isSelected) style = "border-bear bg-bear/15 text-bear";
+                else style = "border-border/30 opacity-60";
+              } else if (isSelected) {
+                style = "border-primary bg-primary/10 shadow-[0_0_14px_hsl(var(--primary)/0.4)]";
+              }
+              return (
+                <button
+                  key={oi}
+                  onClick={() => !revealed && setSelected(oi)}
+                  disabled={revealed}
+                  className={cn(
+                    "w-full text-left p-4 rounded-lg border-2 transition-all text-sm flex items-center gap-3",
+                    style,
+                  )}
+                >
+                  <span className="inline-flex w-7 h-7 rounded-full border border-current items-center justify-center text-xs font-bold shrink-0">
+                    {String.fromCharCode(65 + oi)}
+                  </span>
+                  <span className="flex-1">{opt}</span>
+                  {revealed && isCorrectAnswer && <CheckCircle2 className="w-5 h-5 text-bull shrink-0" />}
+                  {revealed && isSelected && !isCorrectAnswer && <AlertCircle className="w-5 h-5 text-bear shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
 
-        <div className="space-y-4">
-          {questions.map((q, qi) => (
-            <Card key={q.id} className="p-5 bg-card/70 border-border/50 animate-fade-up" style={{ animationDelay: `${qi * 20}ms`, animationFillMode: "both" }}>
-              <p className="font-medium mb-3 text-sm md:text-base">
-                <span className="text-primary font-bold mr-2">{qi + 1}.</span>{q.question}
+          {revealed && (
+            <div className={cn(
+              "mt-5 p-4 rounded-lg border animate-fade-in",
+              isCorrect ? "bg-bull/10 border-bull/40" : "bg-bear/10 border-bear/40",
+            )}>
+              <p className={cn("text-sm font-bold mb-1", isCorrect ? "text-bull" : "text-bear")}>
+                {isCorrect ? "✓ Зөв хариулт" : "✗ Буруу — алдсаныг тэмдэглэлээ"}
               </p>
-              <div className="space-y-2">
-                {q.options.map((opt, oi) => {
-                  const selected = answers[q.id] === oi;
-                  return (
-                    <button
-                      key={oi}
-                      onClick={() => setAnswers((p) => ({ ...p, [q.id]: oi }))}
-                      className={cn(
-                        "w-full text-left p-3 rounded-lg border-2 transition-all text-sm",
-                        selected
-                          ? "border-primary bg-primary/10 shadow-[0_0_14px_hsl(var(--primary)/0.4)]"
-                          : "border-border/40 hover:border-primary/40 hover:bg-secondary/40",
-                      )}
-                    >
-                      <span className="inline-block w-6 h-6 rounded-full border border-current mr-3 text-center text-xs leading-6 font-bold">
-                        {String.fromCharCode(65 + oi)}
-                      </span>
-                      {opt}
-                    </button>
-                  );
-                })}
-              </div>
-            </Card>
-          ))}
-        </div>
+              {q.explanation && (
+                <p className="text-xs text-foreground/80 leading-relaxed">{q.explanation}</p>
+              )}
+            </div>
+          )}
+        </Card>
 
         <Button
-          onClick={submit}
-          disabled={answeredCount < questions.length}
+          onClick={handleNext}
+          disabled={selected === null}
           className="w-full bg-gradient-to-r from-primary to-accent btn-luxury h-12 text-base"
         >
-          <Sparkles className="w-4 h-4 mr-2" /> Илгээх ({answeredCount}/{questions.length})
+          {!revealed
+            ? <>Шалгах <Sparkles className="w-4 h-4 ml-2" /></>
+            : currentIdx + 1 >= questions.length
+              ? <>Үр дүн харах <Trophy className="w-4 h-4 ml-2" /></>
+              : <>Дараагийн асуулт <ArrowRight className="w-4 h-4 ml-2" /></>}
         </Button>
       </div>
     </PageShell>
