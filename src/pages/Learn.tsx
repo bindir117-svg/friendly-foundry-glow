@@ -457,7 +457,7 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
         .eq("level", level)
         .order("order_index");
       if (data && data.length > 0) {
-        setQuestions(data as QuizQuestion[]);
+        setQuestions([...(data as QuizQuestion[])].sort(() => Math.random() - 0.5));
         setLoading(false);
       } else {
         setGenerating(true);
