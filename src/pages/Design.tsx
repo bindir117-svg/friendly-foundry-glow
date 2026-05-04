@@ -62,15 +62,24 @@ const Design = () => {
         },
         body: JSON.stringify({ prompt: prompt.trim() }),
       });
-      const data = await resp.json();
+      let data: any = {};
+      try { data = await resp.json(); } catch { /* ignore */ }
       if (!resp.ok) {
-        toast({ title: "Алдаа", description: data.error || "Зураг үүсгэж чадсангүй", variant: "destructive" });
+        toast({
+          title: `Алдаа (${resp.status})`,
+          description: data?.error || "Зураг үүсгэж чадсангүй. Дахин оролдоно уу.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!data.imageUrl) {
+        toast({ title: "Алдаа", description: "Зураг ирсэнгүй.", variant: "destructive" });
         return;
       }
       setResult(data.imageUrl);
       loadHistory();
     } catch (e: any) {
-      toast({ title: "Алдаа", description: e.message, variant: "destructive" });
+      toast({ title: "Сүлжээний алдаа", description: e.message || "Холболт амжилтгүй", variant: "destructive" });
     } finally {
       setLoading(false);
     }
