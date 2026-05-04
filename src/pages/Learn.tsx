@@ -208,45 +208,70 @@ const Learn = () => {
           <Button variant="ghost" size="sm" onClick={() => setActive(null)} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" /> Жагсаалт
           </Button>
-          <Card className="p-6 md:p-8 bg-card/70 backdrop-blur-xl border-border/50 animate-elastic">
-            <div className="flex items-center gap-2 mb-4">
+
+          {/* Slide-style header (frameless) */}
+          <div className="space-y-3 mb-6 animate-fade-up">
+            <div className="flex items-center gap-2">
               <Badge className={cn(LEVEL_BADGE[active.level])} variant="outline">
                 {LEVEL_LABEL[active.level]}
               </Badge>
               <span className="text-xs text-muted-foreground">
                 Хичээл {idx + 1} / {arr.length}
               </span>
+              <div className="flex-1" />
+              <NoteQuickAdd lessonTitle={active.title} />
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">{active.title}</h1>
-            <p className="text-muted-foreground text-sm mb-6">{active.description}</p>
-            <article className="prose prose-invert prose-sm md:prose-base max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-primary prose-li:text-foreground/90 prose-code:text-info prose-code:bg-secondary prose-code:px-1 prose-code:rounded">
-              <ReactMarkdown>{active.content}</ReactMarkdown>
-            </article>
-            <div className="mt-8 pt-6 border-t border-border/40 flex flex-wrap justify-between items-center gap-3">
-              {progress[active.id] ? (
-                <Badge className="bg-bull/15 text-bull border-bull/40" variant="outline">
-                  <CheckCircle2 className="w-3 h-3 mr-1" /> Дууссан
-                </Badge>
-              ) : <span />}
-              <div className="flex gap-2 ml-auto">
-                {!progress[active.id] && (
-                  <Button onClick={() => markComplete(active)} className="bg-gradient-to-r from-primary to-accent btn-luxury">
-                    <CheckCircle2 className="w-4 h-4 mr-2" /> Дуусгах
-                  </Button>
-                )}
-                {nextLesson && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setActive(nextLesson)}
-                    disabled={!progress[active.id]}
-                    className="border-primary/40"
-                  >
-                    Дараагийн <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                )}
-              </div>
+            <h1 className="text-3xl md:text-4xl font-bold leading-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
+              {active.title}
+            </h1>
+            {active.description && (
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed border-l-2 border-primary/60 pl-3">
+                {active.description}
+              </p>
+            )}
+            <div className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+          </div>
+
+          {/* Frameless lesson body — feels like reading a slide */}
+          <article className="prose prose-invert prose-sm md:prose-base max-w-none animate-fade-up
+            prose-headings:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-h2:text-primary prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-1
+            prose-h3:text-base prose-h3:mt-5 prose-h3:mb-2 prose-h3:text-accent
+            prose-p:text-foreground/90 prose-p:leading-relaxed
+            prose-strong:text-primary prose-li:text-foreground/90 prose-li:my-1
+            prose-code:text-info prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[0.85em]
+            prose-pre:bg-secondary/60 prose-pre:border prose-pre:border-border/40 prose-pre:rounded-xl
+            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:py-1 prose-blockquote:not-italic
+            prose-table:text-sm prose-th:bg-secondary/60 prose-th:text-primary prose-td:border-border/40 prose-th:border-border/40
+            prose-hr:border-primary/20"
+          >
+            <ReactMarkdown>{active.content}</ReactMarkdown>
+          </article>
+
+          {/* Action footer — floating, no card frame */}
+          <div className="mt-10 pt-6 border-t border-border/40 flex flex-wrap justify-between items-center gap-3">
+            {progress[active.id] ? (
+              <Badge className="bg-bull/15 text-bull border-bull/40" variant="outline">
+                <CheckCircle2 className="w-3 h-3 mr-1" /> Дууссан
+              </Badge>
+            ) : <span />}
+            <div className="flex gap-2 ml-auto">
+              {!progress[active.id] && (
+                <Button onClick={() => markComplete(active)} className="bg-gradient-to-r from-primary to-accent btn-luxury">
+                  <CheckCircle2 className="w-4 h-4 mr-2" /> Дуусгах
+                </Button>
+              )}
+              {nextLesson && (
+                <Button
+                  variant="outline"
+                  onClick={() => setActive(nextLesson)}
+                  disabled={!progress[active.id]}
+                  className="border-primary/40"
+                >
+                  Дараагийн <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              )}
             </div>
-          </Card>
+          </div>
         </div>
       </PageShell>
     );
