@@ -4,9 +4,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   CheckCircle2, Circle, BookOpen, ArrowLeft, ArrowRight, Lock,
-  Trophy, GraduationCap, Sparkles, AlertCircle, RotateCcw, Loader2,
+  Trophy, GraduationCap, Sparkles, AlertCircle, RotateCcw, Loader2, StickyNote, Save,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
