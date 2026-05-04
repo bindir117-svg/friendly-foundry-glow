@@ -614,54 +614,19 @@ const Index = () => {
         <div ref={scrollRef} onScroll={handleScroll} className="h-full overflow-y-auto overscroll-contain luxury-scroll">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center min-h-full px-5 pb-8">
-              <div className="w-full max-w-2xl space-y-7">
-                {/* Hero */}
-                <div className="text-center space-y-3 pt-8 animate-fade-up">
-                  <div className="relative w-20 h-20 mx-auto mb-4">
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_50px_hsl(var(--primary)/0.6)]" />
-                    <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-background via-secondary to-background border border-primary/40 flex items-center justify-center">
-                      <CandlestickChart className="w-10 h-10 text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]" />
-                    </div>
+              <div className="w-full max-w-xl text-center space-y-4 animate-fade-up">
+                <div className="relative w-16 h-16 mx-auto">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary to-accent shadow-[0_0_50px_hsl(var(--primary)/0.6)] animate-glow-pulse" />
+                  <div className="relative w-full h-full rounded-2xl bg-gradient-to-br from-background via-secondary to-background border border-primary/40 flex items-center justify-center">
+                    <CandlestickChart className="w-8 h-8 text-primary drop-shadow-[0_0_8px_hsl(var(--primary))]" />
                   </div>
-                  <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
-                    Юу мэдмээр байна?
-                  </h2>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                    Forex-ийн талаар асуултаа бичээрэй, зураг оруулаад шинжлүүлээрэй, эсвэл "зураг зурж өг" гэж хэлээрэй.
-                  </p>
                 </div>
-
-                {/* Feature cards (Сургалт + бусад) */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 animate-fade-up">
-                  {FEATURE_CARDS.map((c) => (
-                    <Link
-                      key={c.to}
-                      to={c.to}
-                      className={`btn-luxury group relative overflow-hidden rounded-xl p-3 border border-border/60 bg-gradient-to-br ${c.color} hover:border-primary/50`}
-                    >
-                      <c.icon className="w-5 h-5 text-primary mb-2" />
-                      <div className="text-xs font-semibold">{c.title}</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{c.desc}</div>
-                    </Link>
-                  ))}
-                </div>
-
-                {/* Quick Actions */}
-                <div className="space-y-2 animate-fade-up">
-                  {QUICK_ACTIONS.map((action) => (
-                    <button
-                      key={action.label}
-                      onClick={() => sendMessage(action.message)}
-                      className="btn-luxury w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-border/60 bg-card/40 backdrop-blur-sm hover:bg-card hover:border-primary/50 group text-left"
-                    >
-                      <div className="w-9 h-9 rounded-lg bg-secondary flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
-                        <action.icon className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                      <span className="text-sm text-foreground/90 flex-1 font-medium">{action.label}</span>
-                      <ChevronRight className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  ))}
-                </div>
+                <h2 className="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
+                  Юу мэдмээр байна?
+                </h2>
+                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
+                  Доор асуултаа бичээрэй — Forex, график, шинжилгээ, зураг бүгд боломжтой.
+                </p>
               </div>
             </div>
           ) : (
