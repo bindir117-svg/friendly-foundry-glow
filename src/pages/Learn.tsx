@@ -444,7 +444,8 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
       .select("*")
       .eq("level", level)
       .order("order_index");
-    setQuestions((data as QuizQuestion[]) || []);
+    const shuffled = [...((data as QuizQuestion[]) || [])].sort(() => Math.random() - 0.5);
+    setQuestions(shuffled);
     setLoading(false);
   };
 
