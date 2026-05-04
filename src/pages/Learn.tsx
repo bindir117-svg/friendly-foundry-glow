@@ -745,4 +745,75 @@ const ExamView = ({ level, lessons, onClose, onLessonReview }: ExamViewProps) =>
   );
 };
 
+// ===================== NOTE QUICK ADD =====================
+const NoteQuickAdd = ({ lessonTitle }: { lessonTitle: string }) => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (!user || !text.trim()) return;
+    setSaving(true);
+    const { error } = await supabase.from("notes").insert({
+      user_id: user.id,
+      title: `📚 ${lessonTitle}`,
+      content: text.trim(),
+      image_urls: [],
+      bg_color: "#0a1a2e",
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: "Хадгалж чадсангүй", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Тэмдэглэл хадгалагдлаа ✓" });
+    setText("");
+    setOpen(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+        >
+          <StickyNote className="w-3.5 h-3.5" /> Тэмдэглэл
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-card border-primary/30">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <StickyNote className="w-4 h-4 text-primary" /> Хичээлийн тэмдэглэл
+          </DialogTitle>
+        </DialogHeader>
+        <p className="text-xs text-muted-foreground -mt-2">
+          {lessonTitle}-ээс гол санааг өөрөөрөө бичээд хадгал.
+        </p>
+        <Textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Гол санаа, томьёо, өөрийн жишээ..."
+          rows={6}
+          className="resize-none"
+        />
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => setOpen(false)}>Болих</Button>
+          <Button
+            onClick={save}
+            disabled={!text.trim() || saving}
+            className="bg-gradient-to-r from-primary to-accent btn-luxury"
+          >
+            {saving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+            Хадгалах
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export default Learn;
