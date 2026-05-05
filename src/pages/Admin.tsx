@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, MessageSquare, Loader2, Users, Shield } from "lucide-react";
+import { ArrowLeft, MessageSquare, Loader2, Users, Shield, StickyNote } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface Profile {
@@ -24,14 +24,24 @@ interface Msg {
   created_at: string;
 }
 
+interface Note {
+  id: string;
+  title: string;
+  content: string;
+  bg_color: string;
+  updated_at: string;
+}
+
 const Admin = () => {
   const { signOut } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [sessionsByUser, setSessionsByUser] = useState<Record<string, Sess[]>>({});
   const [msgCount, setMsgCount] = useState<Record<string, number>>({});
+  const [notesByUser, setNotesByUser] = useState<Record<string, Note[]>>({});
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [selectedSession, setSelectedSession] = useState<Sess | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
+  const [tab, setTab] = useState<"chat" | "notes">("chat");
   const [loading, setLoading] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
 
@@ -58,6 +68,18 @@ const Admin = () => {
       });
       setSessionsByUser(grouped);
       setMsgCount(counts);
+
+      const { data: notes } = await supabase
+        .from("notes")
+        .select("id, user_id, title, content, bg_color, updated_at")
+        .order("updated_at", { ascending: false });
+      const noteGroup: Record<string, Note[]> = {};
+      (notes || []).forEach((n: any) => {
+        if (!noteGroup[n.user_id]) noteGroup[n.user_id] = [];
+        noteGroup[n.user_id].push(n);
+      });
+      setNotesByUser(noteGroup);
+
       setLoading(false);
     })();
   }, []);
