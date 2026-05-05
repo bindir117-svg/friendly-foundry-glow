@@ -22,11 +22,11 @@ interface Note {
 }
 
 const PRESET_COLORS = [
-  { name: "Цэнхэр", value: "#0a1a2e" },
-  { name: "Ногоон", value: "#0a2018" },
-  { name: "Шар", value: "#2a1f0a" },
-  { name: "Улаан", value: "#2a0a14" },
-  { name: "Ягаан", value: "#2a0a1f" },
+  { name: "Ягаан", value: "#ec4899" },
+  { name: "Цэнхэр", value: "#3b82f6" },
+  { name: "Ногоон", value: "#10b981" },
+  { name: "Шар", value: "#f59e0b" },
+  { name: "Ягаан-Нил", value: "#a855f7" },
 ];
 
 const Notes = () => {
@@ -141,8 +141,8 @@ const Notes = () => {
 
         {creating && (
           <Card
-            className="p-4 md:p-6 border-primary/40 space-y-4 animate-elastic transition-colors"
-            style={{ backgroundColor: bgColor }}
+            className="p-4 md:p-6 border-2 space-y-4 animate-elastic transition-colors bg-card"
+            style={{ borderColor: bgColor }}
           >
             <div className="flex items-center justify-between">
               <Input
@@ -231,21 +231,21 @@ const Notes = () => {
             <button
               key={n.id}
               onClick={() => openNote(n)}
-              className="group relative bg-primary text-primary-foreground rounded-xl p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_hsl(var(--primary)/0.5)] animate-fade-up overflow-hidden"
-              style={{ animationDelay: `${i * 30}ms`, animationFillMode: "both" }}
+              className="group relative text-white rounded-xl p-4 text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl animate-fade-up overflow-hidden"
+              style={{ animationDelay: `${i * 30}ms`, animationFillMode: "both", backgroundColor: n.bg_color || PRESET_COLORS[0].value }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="relative flex items-start justify-between gap-2">
-                <h3 className="font-bold text-sm line-clamp-2 flex-1">{n.title}</h3>
+                <h3 className="font-bold text-sm line-clamp-2 flex-1 drop-shadow">{n.title}</h3>
                 <span
                   role="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); remove(n.id); }}
-                  className="text-primary-foreground/60 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                  className="text-white/70 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </span>
               </div>
-              <p className="relative text-[10px] text-primary-foreground/70 mt-2">
+              <p className="relative text-[10px] text-white/80 mt-2">
                 {format(new Date(n.updated_at), "MM-dd HH:mm")}
               </p>
             </button>
