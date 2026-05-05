@@ -233,16 +233,22 @@ const Learn = () => {
           </div>
 
           {/* Frameless lesson body — feels like reading a slide */}
-          <article className="prose prose-invert prose-sm md:prose-base max-w-none animate-fade-up
-            prose-headings:text-foreground prose-h1:text-2xl prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-3 prose-h2:text-primary prose-h2:border-b prose-h2:border-primary/20 prose-h2:pb-1
-            prose-h3:text-base prose-h3:mt-5 prose-h3:mb-2 prose-h3:text-accent
-            prose-p:text-foreground/90 prose-p:leading-relaxed
-            prose-strong:text-primary prose-li:text-foreground/90 prose-li:my-1
-            prose-code:text-info prose-code:bg-secondary prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[0.85em]
-            prose-pre:bg-secondary/60 prose-pre:border prose-pre:border-border/40 prose-pre:rounded-xl
-            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:py-1 prose-blockquote:not-italic
-            prose-table:text-sm prose-th:bg-secondary/60 prose-th:text-primary prose-td:border-border/40 prose-th:border-border/40
-            prose-hr:border-primary/20"
+          <article className="prose prose-invert prose-base md:prose-lg max-w-none animate-fade-up
+            prose-headings:text-foreground prose-headings:font-bold
+            prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-primary prose-h2:border-b-2 prose-h2:border-primary/30 prose-h2:pb-2
+            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-accent
+            prose-p:text-foreground/90 prose-p:leading-[1.9] prose-p:my-5
+            prose-strong:text-primary prose-strong:font-bold
+            prose-li:text-foreground/90 prose-li:leading-relaxed prose-li:my-2.5
+            prose-ul:my-5 prose-ol:my-5
+            prose-code:text-info prose-code:bg-secondary prose-code:px-2 prose-code:py-0.5 prose-code:rounded prose-code:text-[0.9em] prose-code:before:content-none prose-code:after:content-none
+            prose-pre:bg-secondary/40 prose-pre:border prose-pre:border-primary/20 prose-pre:rounded-2xl prose-pre:p-5 prose-pre:my-7 prose-pre:leading-relaxed
+            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-6 prose-blockquote:not-italic prose-blockquote:text-foreground/95
+            prose-table:my-7 prose-th:bg-primary/10 prose-th:text-primary prose-th:p-3 prose-td:p-3 prose-td:border-border/40 prose-th:border-border/40
+            prose-hr:border-primary/20 prose-hr:my-10
+            prose-a:text-primary prose-img:rounded-xl prose-img:my-6
+            [&_details]:my-5 [&_details]:p-4 [&_details]:rounded-xl [&_details]:bg-accent/10 [&_details]:border [&_details]:border-accent/30
+            [&_summary]:cursor-pointer [&_summary]:font-semibold [&_summary]:text-accent"
           >
             <ReactMarkdown>{active.content}</ReactMarkdown>
           </article>
