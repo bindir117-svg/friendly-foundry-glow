@@ -150,7 +150,7 @@ const Notes = () => {
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Гарчиг"
                 maxLength={100}
-                className="text-lg font-semibold border-0 bg-transparent focus-visible:ring-0 px-0 text-foreground placeholder:text-foreground/40"
+                className="text-lg font-semibold border-0 bg-transparent focus-visible:ring-0 px-0"
               />
               <Button variant="ghost" size="icon" onClick={closeEditor}>
                 <X className="w-4 h-4" />
@@ -161,13 +161,13 @@ const Notes = () => {
               onChange={(e) => setContent(e.target.value)}
               placeholder="Тэмдэглэлээ бичнэ үү..."
               rows={8}
-              className="resize-none bg-background/30 border-foreground/10"
+              className="resize-none bg-secondary/40 border-border/40"
             />
 
             {/* Color picker */}
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs text-foreground/70">
-                <Palette className="w-3.5 h-3.5" /> Дэвсгэр өнгө
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Palette className="w-3.5 h-3.5" /> Картын өнгө (гадна)
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {PRESET_COLORS.map((c) => (
@@ -178,7 +178,7 @@ const Notes = () => {
                     title={c.name}
                     className={cn(
                       "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
-                      bgColor === c.value ? "border-primary shadow-[0_0_14px_hsl(var(--primary)/0.7)] scale-110" : "border-foreground/20",
+                      bgColor === c.value ? "border-foreground shadow-lg scale-110" : "border-border",
                     )}
                     style={{ backgroundColor: c.value }}
                   />
