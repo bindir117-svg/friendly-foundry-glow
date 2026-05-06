@@ -204,13 +204,16 @@ const Learn = () => {
     const nextLesson = arr[idx + 1];
     return (
       <PageShell title={active.title}>
-        <div className="max-w-3xl mx-auto p-4 md:p-8 animate-fade-in">
-          <Button variant="ghost" size="sm" onClick={() => setActive(null)} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" /> Жагсаалт
-          </Button>
+        <div className="max-w-3xl mx-auto px-5 md:px-8 py-6 md:py-10 animate-fade-in">
+          <div className="flex items-center justify-between mb-6">
+            <Button variant="ghost" size="sm" onClick={() => setActive(null)}>
+              <ArrowLeft className="w-4 h-4 mr-2" /> Жагсаалт
+            </Button>
+            <NoteQuickAdd lessonTitle={active.title} />
+          </div>
 
-          {/* Slide-style header (frameless) */}
-          <div className="space-y-3 mb-6 animate-fade-up">
+          {/* Slide-style header */}
+          <div className="space-y-4 mb-10 animate-fade-up">
             <div className="flex items-center gap-2">
               <Badge className={cn(LEVEL_BADGE[active.level])} variant="outline">
                 {LEVEL_LABEL[active.level]}
@@ -218,43 +221,44 @@ const Learn = () => {
               <span className="text-xs text-muted-foreground">
                 Хичээл {idx + 1} / {arr.length}
               </span>
-              <div className="flex-1" />
-              <NoteQuickAdd lessonTitle={active.title} />
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold leading-tight bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-3xl md:text-5xl font-bold leading-[1.15] bg-gradient-to-r from-foreground via-primary to-accent bg-clip-text text-transparent">
               {active.title}
             </h1>
             {active.description && (
-              <p className="text-sm md:text-base text-muted-foreground leading-relaxed border-l-2 border-primary/60 pl-3">
+              <p className="text-base md:text-lg text-muted-foreground leading-relaxed border-l-2 border-primary/60 pl-4">
                 {active.description}
               </p>
             )}
             <div className="h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
           </div>
 
-          {/* Frameless lesson body — feels like reading a slide */}
-          <article className="prose prose-invert prose-base md:prose-lg max-w-none animate-fade-up
-            prose-headings:text-foreground prose-headings:font-bold
-            prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-5 prose-h2:text-primary prose-h2:border-b-2 prose-h2:border-primary/30 prose-h2:pb-2
-            prose-h3:text-xl prose-h3:mt-8 prose-h3:mb-3 prose-h3:text-accent
-            prose-p:text-foreground/90 prose-p:leading-[1.9] prose-p:my-5
+          {/* Lesson body — generous breathing room */}
+          <article className="prose prose-invert prose-lg max-w-none animate-fade-up
+            prose-headings:text-foreground prose-headings:font-bold prose-headings:tracking-tight
+            prose-h2:text-2xl md:prose-h2:text-3xl prose-h2:mt-14 prose-h2:mb-6 prose-h2:text-primary prose-h2:border-b-2 prose-h2:border-primary/30 prose-h2:pb-3
+            prose-h3:text-xl md:prose-h3:text-2xl prose-h3:mt-10 prose-h3:mb-4 prose-h3:text-accent
+            prose-h4:text-lg prose-h4:mt-7 prose-h4:mb-3 prose-h4:text-info
+            prose-p:text-foreground/90 prose-p:leading-[2] prose-p:my-6 prose-p:text-[1.05rem]
             prose-strong:text-primary prose-strong:font-bold
-            prose-li:text-foreground/90 prose-li:leading-relaxed prose-li:my-2.5
-            prose-ul:my-5 prose-ol:my-5
-            prose-code:text-info prose-code:bg-secondary prose-code:px-2 prose-code:py-0.5 prose-code:rounded prose-code:text-[0.9em] prose-code:before:content-none prose-code:after:content-none
-            prose-pre:bg-secondary/40 prose-pre:border prose-pre:border-primary/20 prose-pre:rounded-2xl prose-pre:p-5 prose-pre:my-7 prose-pre:leading-relaxed
-            prose-blockquote:border-l-4 prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-6 prose-blockquote:not-italic prose-blockquote:text-foreground/95
-            prose-table:my-7 prose-th:bg-primary/10 prose-th:text-primary prose-th:p-3 prose-td:p-3 prose-td:border-border/40 prose-th:border-border/40
-            prose-hr:border-primary/20 prose-hr:my-10
-            prose-a:text-primary prose-img:rounded-xl prose-img:my-6
-            [&_details]:my-5 [&_details]:p-4 [&_details]:rounded-xl [&_details]:bg-accent/10 [&_details]:border [&_details]:border-accent/30
-            [&_summary]:cursor-pointer [&_summary]:font-semibold [&_summary]:text-accent"
+            prose-em:text-accent prose-em:not-italic prose-em:font-medium
+            prose-li:text-foreground/90 prose-li:leading-[1.9] prose-li:my-3 prose-li:marker:text-primary
+            prose-ul:my-7 prose-ul:space-y-1 prose-ol:my-7 prose-ol:space-y-1
+            prose-code:text-info prose-code:bg-secondary/80 prose-code:px-2 prose-code:py-1 prose-code:rounded-md prose-code:text-[0.92em] prose-code:font-semibold prose-code:before:content-none prose-code:after:content-none
+            prose-pre:bg-gradient-to-br prose-pre:from-secondary/60 prose-pre:to-secondary/20 prose-pre:border prose-pre:border-primary/30 prose-pre:rounded-2xl prose-pre:p-6 prose-pre:my-8 prose-pre:leading-[1.7] prose-pre:text-[0.92em] prose-pre:shadow-lg
+            prose-blockquote:border-l-4 prose-blockquote:border-accent prose-blockquote:bg-accent/5 prose-blockquote:rounded-r-xl prose-blockquote:py-4 prose-blockquote:px-5 prose-blockquote:my-8 prose-blockquote:not-italic prose-blockquote:text-foreground/95 prose-blockquote:text-base
+            prose-table:my-8 prose-table:rounded-xl prose-table:overflow-hidden prose-th:bg-primary/15 prose-th:text-primary prose-th:p-4 prose-th:text-left prose-td:p-4 prose-td:border-border/40 prose-th:border-border/40 prose-tr:border-border/30
+            prose-hr:border-primary/20 prose-hr:my-12
+            prose-a:text-primary prose-img:rounded-xl prose-img:my-8 prose-img:shadow-xl
+            [&_details]:my-7 [&_details]:p-5 [&_details]:rounded-2xl [&_details]:bg-gradient-to-br [&_details]:from-accent/15 [&_details]:to-accent/5 [&_details]:border [&_details]:border-accent/30 [&_details]:shadow-md
+            [&_summary]:cursor-pointer [&_summary]:font-bold [&_summary]:text-accent [&_summary]:text-base [&_summary]:select-none [&_summary]:py-1
+            [&_details[open]_summary]:mb-3 [&_details[open]_summary]:pb-2 [&_details[open]_summary]:border-b [&_details[open]_summary]:border-accent/20"
           >
             <ReactMarkdown>{active.content}</ReactMarkdown>
           </article>
 
-          {/* Action footer — floating, no card frame */}
-          <div className="mt-10 pt-6 border-t border-border/40 flex flex-wrap justify-between items-center gap-3">
+          {/* Action footer */}
+          <div className="mt-14 pt-8 border-t border-border/40 flex flex-wrap justify-between items-center gap-3">
             {progress[active.id] ? (
               <Badge className="bg-bull/15 text-bull border-bull/40" variant="outline">
                 <CheckCircle2 className="w-3 h-3 mr-1" /> Дууссан
