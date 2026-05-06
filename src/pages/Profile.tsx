@@ -118,19 +118,19 @@ const Profile = () => {
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
           <div className="relative flex flex-col sm:flex-row items-center gap-6">
             <div className="relative animate-glow-pulse rounded-full">
-              <Avatar className="w-28 h-28 ring-2 ring-primary/50 shadow-[0_0_40px_hsl(var(--primary)/0.5)]">
+              <Avatar className="w-20 h-20 sm:w-24 sm:h-24 ring-2 ring-primary/50 shadow-[0_0_28px_hsl(var(--primary)/0.45)]">
                 <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-                <AvatarFallback className="text-3xl bg-gradient-to-br from-primary to-accent text-primary-foreground">
+                <AvatarFallback className="text-2xl sm:text-3xl bg-gradient-to-br from-primary to-accent text-primary-foreground">
                   {initial}
                 </AvatarFallback>
               </Avatar>
               <button
                 onClick={() => fileRef.current?.click()}
                 disabled={uploading}
-                className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50 btn-luxury"
+                className="absolute -bottom-1 -right-1 w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-primary to-accent text-primary-foreground flex items-center justify-center shadow-lg hover:scale-110 transition-transform disabled:opacity-50 btn-luxury"
                 aria-label="Зураг солих"
               >
-                <Camera className="w-4 h-4" />
+                <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
               <input
                 ref={fileRef}

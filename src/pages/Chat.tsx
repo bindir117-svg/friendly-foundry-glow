@@ -195,7 +195,7 @@ const Index = () => {
         typing = false;
         return;
       }
-      const batchSize = Math.max(1, Math.min(charQueue.length > 80 ? 6 : 2, charQueue.length));
+      const batchSize = Math.max(1, Math.min(charQueue.length > 200 ? 20 : charQueue.length > 80 ? 10 : 4, charQueue.length));
       assistantText += charQueue.splice(0, batchSize).join("");
       const snapshot = assistantText;
       setMessages((prev) => {
