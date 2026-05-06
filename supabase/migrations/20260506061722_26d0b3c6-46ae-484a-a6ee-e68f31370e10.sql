@@ -1,0 +1,1 @@
+UPDATE public.profiles SET display_name='Bindir' WHERE user_id='93395123-597a-4f93-b813-31927355c6bc';
