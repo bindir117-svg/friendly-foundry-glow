@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { PageShell } from "@/components/PageShell";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -100,12 +101,20 @@ const fireCelebration = () => {
 const Learn = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const params = useParams();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
   const [attempts, setAttempts] = useState<QuizAttempt[]>([]);
-  const [active, setActive] = useState<Lesson | null>(null);
-  const [examLevel, setExamLevel] = useState<Level | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const active = useMemo(
+    () => lessons.find((l) => l.id === params.lessonId) || null,
+    [lessons, params.lessonId],
+  );
+  const examLevel = (LEVELS as readonly string[]).includes(params.level || "")
+    ? (params.level as Level)
+    : null;
 
   useEffect(() => {
     (async () => {
@@ -152,7 +161,7 @@ const Learn = () => {
   };
 
   const openLesson = async (lesson: Lesson) => {
-    setActive(lesson);
+    navigate(`/learn/lesson/${lesson.id}`);
     if (!user) return;
     await supabase.from("lesson_progress").upsert(
       { user_id: user.id, lesson_id: lesson.id, viewed_at: new Date().toISOString() },
@@ -167,14 +176,13 @@ const Learn = () => {
       { onConflict: "user_id,lesson_id" },
     );
     setProgress((p) => ({ ...p, [lesson.id]: true }));
-    // Auto next
     const arr = lessonsByLevel[lesson.level];
     const idx = arr.findIndex((l) => l.id === lesson.id);
     const next = arr[idx + 1];
-    if (next) setActive(next);
+    if (next) navigate(`/learn/lesson/${next.id}`);
     else {
       toast({ title: "🎉 Бүх хичээл дууссан!", description: "Одоо шалгалт өгөөрэй." });
-      setActive(null);
+      navigate("/learn");
     }
   };
 
@@ -185,14 +193,14 @@ const Learn = () => {
         level={examLevel}
         lessons={lessonsByLevel[examLevel]}
         onClose={(refreshAttempts) => {
-          setExamLevel(null);
+          navigate("/learn");
           if (refreshAttempts && user) {
             supabase.from("quiz_attempts").select("*").eq("user_id", user.id)
               .order("created_at", { ascending: false })
               .then(({ data }) => setAttempts((data as QuizAttempt[]) || []));
           }
         }}
-        onLessonReview={(lesson) => { setExamLevel(null); setActive(lesson); }}
+        onLessonReview={(lesson) => navigate(`/learn/lesson/${lesson.id}`)}
       />
     );
   }
