@@ -414,7 +414,7 @@ const Learn = () => {
                       )}
                     </div>
                     <Button
-                      onClick={() => setExamLevel(lvl)}
+                      onClick={() => navigate(`/learn/exam/${lvl}`)}
                       disabled={!allDone}
                       className={cn(
                         "btn-luxury",
