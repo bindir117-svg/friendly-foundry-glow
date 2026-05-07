@@ -214,7 +214,7 @@ const Learn = () => {
       <PageShell title={active.title}>
         <div className="max-w-3xl mx-auto px-5 md:px-8 py-6 md:py-10 animate-fade-in">
           <div className="flex items-center justify-between mb-6">
-            <Button variant="ghost" size="sm" onClick={() => setActive(null)}>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/learn")}>
               <ArrowLeft className="w-4 h-4 mr-2" /> Жагсаалт
             </Button>
             <NoteQuickAdd lessonTitle={active.title} />
@@ -281,7 +281,7 @@ const Learn = () => {
               {nextLesson && (
                 <Button
                   variant="outline"
-                  onClick={() => setActive(nextLesson)}
+                  onClick={() => navigate(`/learn/lesson/${nextLesson.id}`)}
                   disabled={!progress[active.id]}
                   className="border-primary/40"
                 >
