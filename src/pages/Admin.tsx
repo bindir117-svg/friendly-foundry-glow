@@ -33,8 +33,18 @@ interface Note {
   updated_at: string;
 }
 
+interface Lesson {
+  id: string;
+  level: "beginner" | "intermediate" | "advanced";
+  title: string;
+  description: string;
+  content: string;
+  order_index: number;
+}
+
 const Admin = () => {
   const { signOut } = useAuth();
+  const { toast } = useToast();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [sessionsByUser, setSessionsByUser] = useState<Record<string, Sess[]>>({});
   const [msgCount, setMsgCount] = useState<Record<string, number>>({});
@@ -42,9 +52,14 @@ const Admin = () => {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [selectedSession, setSelectedSession] = useState<Sess | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [tab, setTab] = useState<"chat" | "notes">("chat");
+  const [tab, setTab] = useState<"chat" | "notes" | "lessons">("chat");
   const [loading, setLoading] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
+
+  // Lessons admin state
+  const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
+  const [lessonLevelFilter, setLessonLevelFilter] = useState<"beginner" | "intermediate" | "advanced">("beginner");
 
   useEffect(() => {
     (async () => {
