@@ -229,6 +229,24 @@ const Index = () => {
         if (data === "[DONE]") continue;
         try {
           const parsed = JSON.parse(data);
+          // Custom side-effects payload from agentic tool loop
+          if (parsed.side_effects && Array.isArray(parsed.side_effects)) {
+            for (const fx of parsed.side_effects) {
+              if (fx.tool === "save_note" && fx.result?.ok) {
+                toast({ title: "📝 Тэмдэглэл хадгалагдлаа", description: fx.args?.title || "" });
+              } else if (fx.tool === "generate_image" && fx.result?.ok && fx.result.image_url) {
+                enqueue(`\n\n![generated](${fx.result.image_url})\n\n`);
+              } else if (fx.tool === "navigate" && fx.result?.path) {
+                const path = fx.result.path;
+                toast({ title: "➡️ Шилжих", description: `${path}` });
+                setTimeout(() => navigate(path), 1200);
+              } else if (fx.tool === "search_lessons" && fx.result?.lessons?.length) {
+                const md = fx.result.lessons.map((l: any) => `- [${l.title}](${l.url}) — ${l.desc || ""}`).join("\n");
+                enqueue(`\n\n**Холбогдох хичээлүүд:**\n${md}\n\n`);
+              }
+            }
+            continue;
+          }
           const delta = parsed.choices?.[0]?.delta?.content;
           if (delta) enqueue(delta);
         } catch { /* skip */ }
