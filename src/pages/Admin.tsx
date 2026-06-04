@@ -100,6 +100,50 @@ const Admin = () => {
     })();
   }, []);
 
+  // Load lessons when tab opens
+  useEffect(() => {
+    if (tab !== "lessons") return;
+    (async () => {
+      const { data } = await supabase.from("lessons").select("*").order("level").order("order_index");
+      setLessons((data as Lesson[]) || []);
+    })();
+  }, [tab]);
+
+  const refreshLessons = async () => {
+    const { data } = await supabase.from("lessons").select("*").order("level").order("order_index");
+    setLessons((data as Lesson[]) || []);
+  };
+
+  const saveLesson = async () => {
+    if (!editingLesson) return;
+    const payload = {
+      level: editingLesson.level,
+      title: editingLesson.title,
+      description: editingLesson.description || "",
+      content: editingLesson.content || "",
+      order_index: editingLesson.order_index ?? 0,
+    };
+    if (editingLesson.id) {
+      const { error } = await supabase.from("lessons").update(payload).eq("id", editingLesson.id);
+      if (error) return toast({ title: "Алдаа", description: error.message, variant: "destructive" });
+      toast({ title: "Хадгалагдлаа" });
+    } else {
+      const { error } = await supabase.from("lessons").insert(payload);
+      if (error) return toast({ title: "Алдаа", description: error.message, variant: "destructive" });
+      toast({ title: "Нэмэгдлээ" });
+    }
+    setEditingLesson(null);
+    await refreshLessons();
+  };
+
+  const deleteLesson = async (id: string) => {
+    if (!confirm("Энэ хичээлийг устгах уу?")) return;
+    const { error } = await supabase.from("lessons").delete().eq("id", id);
+    if (error) return toast({ title: "Алдаа", description: error.message, variant: "destructive" });
+    toast({ title: "Устгагдлаа" });
+    await refreshLessons();
+  };
+
   const loadMessages = async (s: Sess) => {
     setSelectedSession(s);
     setLoadingMsgs(true);
