@@ -276,7 +276,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: AI_MODEL,
           temperature: 0.6,
-          tools: TOOLS,
+          tools: activeTools,
           tool_choice: "auto",
           messages: convo,
         }),
