@@ -261,6 +261,7 @@ Deno.serve(async (req) => {
     const AI_MODEL = "google/gemini-2.5-flash";
 
     const ctx = { supabase: supabaseClient, userId: userData.user.id, lovableKey, tavilyKey };
+    const activeTools = tavilyKey ? TOOLS : TOOLS.filter((t: any) => t.function?.name !== "web_search");
     const convo: any[] = [{ role: "system", content: SYSTEM_PROMPT }, ...cleanMessages];
 
     // Collected side-effects to emit to client before final stream
@@ -275,7 +276,7 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           model: AI_MODEL,
           temperature: 0.6,
-          tools: TOOLS,
+          tools: activeTools,
           tool_choice: "auto",
           messages: convo,
         }),
