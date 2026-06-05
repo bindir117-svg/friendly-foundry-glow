@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, MessageSquare, Loader2, Users, Shield, StickyNote, BookOpen, Plus, Edit3, Trash2, Save, X } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
+import LessonEditor from "@/components/LessonEditor";
 
 interface Profile {
   user_id: string;
