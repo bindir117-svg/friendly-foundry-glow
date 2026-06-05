@@ -254,10 +254,11 @@ Deno.serve(async (req) => {
     }
     if (cleanMessages.length === 0) return new Response(JSON.stringify({ error: "Буруу формат." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const groqKey = Deno.env.get("GROQ_API_KEY");
     const tavilyKey = Deno.env.get("TAVILY_API_KEY") ?? undefined;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY")!;
-    if (!groqKey) return new Response(JSON.stringify({ error: "Үйлчилгээ түр ажиллахгүй байна." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableKey) return new Response(JSON.stringify({ error: "AI түлхүүр тохируулагдаагүй." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const AI_MODEL = "google/gemini-2.5-flash";
 
     const ctx = { supabase: supabaseClient, userId: userData.user.id, lovableKey, tavilyKey };
     const convo: any[] = [{ role: "system", content: SYSTEM_PROMPT }, ...cleanMessages];
