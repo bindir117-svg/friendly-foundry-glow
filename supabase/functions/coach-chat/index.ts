@@ -312,20 +312,19 @@ Deno.serve(async (req) => {
     }
 
     // Final streaming response
-    const finalResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const finalResp = await fetch(AI_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${groqKey}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: AI_MODEL,
         stream: true,
-        max_tokens: 1500,
         temperature: 0.7,
         messages: convo,
       }),
     });
     if (!finalResp.ok || !finalResp.body) {
       const t = await finalResp.text().catch(() => "");
-      console.error("Groq final error:", finalResp.status, t);
+      console.error("AI final error:", finalResp.status, t);
       return new Response(JSON.stringify({ error: "Үйлчилгээ түр ажиллахгүй байна." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
