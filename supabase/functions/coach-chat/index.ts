@@ -269,12 +269,11 @@ Deno.serve(async (req) => {
     // Multi-step tool loop (non-streaming until model returns no tool calls)
     let step = 0;
     while (step < MAX_TOOL_STEPS) {
-      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const resp = await fetch(AI_URL, {
         method: "POST",
-        headers: { Authorization: `Bearer ${groqKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          max_tokens: 1024,
+          model: AI_MODEL,
           temperature: 0.6,
           tools: TOOLS,
           tool_choice: "auto",
@@ -283,8 +282,9 @@ Deno.serve(async (req) => {
       });
       if (!resp.ok) {
         const t = await resp.text();
-        console.error("Groq tool-step error:", resp.status, t);
+        console.error("AI tool-step error:", resp.status, t);
         if (resp.status === 429) return new Response(JSON.stringify({ error: "Хэт олон хүсэлт." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (resp.status === 402) return new Response(JSON.stringify({ error: "AI кредит дууссан байна." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         break;
       }
       const data = await resp.json();
