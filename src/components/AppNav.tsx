@@ -1,8 +1,9 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, User, BookOpen, MessageSquare, StickyNote } from "lucide-react";
+import { Home, User, BookOpen, MessageSquare, StickyNote, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
-const items = [
+const baseItems = [
   { to: "/", label: "Нүүр", icon: Home },
   { to: "/chat", label: "Чат", icon: MessageSquare },
   { to: "/learn", label: "Сургалт", icon: BookOpen },
@@ -10,8 +11,14 @@ const items = [
   { to: "/profile", label: "Профайл", icon: User },
 ];
 
+const useItems = () => {
+  const { isAdmin } = useAuth();
+  return isAdmin ? [...baseItems, { to: "/admin", label: "Админ", icon: Shield }] : baseItems;
+};
+
 export const TopNav = () => {
   const { pathname } = useLocation();
+  const items = useItems();
   return (
     <nav className="hidden md:flex items-center gap-1">
       {items.map((it) => {
@@ -38,6 +45,7 @@ export const TopNav = () => {
 
 export const MobileNav = () => {
   const { pathname } = useLocation();
+  const items = useItems();
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 border-t border-border/40 bg-background/85 backdrop-blur-xl">
       <ul className="flex items-center justify-around py-1.5 px-1">
