@@ -41,6 +41,8 @@ interface Lesson {
   description: string;
   content: string;
   order_index: number;
+  accent_color?: string | null;
+  cover_image?: string | null;
 }
 
 const Admin = () => {
