@@ -129,11 +129,11 @@ const Admin = () => {
       cover_image: editingLesson.cover_image || null,
     };
     if (editingLesson.id) {
-      const { error } = await supabase.from("lessons").update(payload).eq("id", editingLesson.id);
+      const { error } = await supabase.from("lessons").update(payload as any).eq("id", editingLesson.id);
       if (error) return toast({ title: "Алдаа", description: error.message, variant: "destructive" });
       toast({ title: "Хадгалагдлаа" });
     } else {
-      const { error } = await supabase.from("lessons").insert(payload);
+      const { error } = await supabase.from("lessons").insert(payload as any);
       if (error) return toast({ title: "Алдаа", description: error.message, variant: "destructive" });
       toast({ title: "Нэмэгдлээ" });
     }
