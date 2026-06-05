@@ -254,10 +254,11 @@ Deno.serve(async (req) => {
     }
     if (cleanMessages.length === 0) return new Response(JSON.stringify({ error: "Буруу формат." }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-    const groqKey = Deno.env.get("GROQ_API_KEY");
     const tavilyKey = Deno.env.get("TAVILY_API_KEY") ?? undefined;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY")!;
-    if (!groqKey) return new Response(JSON.stringify({ error: "Үйлчилгээ түр ажиллахгүй байна." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    if (!lovableKey) return new Response(JSON.stringify({ error: "AI түлхүүр тохируулагдаагүй." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+    const AI_MODEL = "google/gemini-2.5-flash";
 
     const ctx = { supabase: supabaseClient, userId: userData.user.id, lovableKey, tavilyKey };
     const convo: any[] = [{ role: "system", content: SYSTEM_PROMPT }, ...cleanMessages];
@@ -268,12 +269,11 @@ Deno.serve(async (req) => {
     // Multi-step tool loop (non-streaming until model returns no tool calls)
     let step = 0;
     while (step < MAX_TOOL_STEPS) {
-      const resp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const resp = await fetch(AI_URL, {
         method: "POST",
-        headers: { Authorization: `Bearer ${groqKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          max_tokens: 1024,
+          model: AI_MODEL,
           temperature: 0.6,
           tools: TOOLS,
           tool_choice: "auto",
@@ -282,8 +282,9 @@ Deno.serve(async (req) => {
       });
       if (!resp.ok) {
         const t = await resp.text();
-        console.error("Groq tool-step error:", resp.status, t);
+        console.error("AI tool-step error:", resp.status, t);
         if (resp.status === 429) return new Response(JSON.stringify({ error: "Хэт олон хүсэлт." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        if (resp.status === 402) return new Response(JSON.stringify({ error: "AI кредит дууссан байна." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
         break;
       }
       const data = await resp.json();
@@ -311,20 +312,19 @@ Deno.serve(async (req) => {
     }
 
     // Final streaming response
-    const finalResp = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const finalResp = await fetch(AI_URL, {
       method: "POST",
-      headers: { Authorization: `Bearer ${groqKey}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${lovableKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: AI_MODEL,
         stream: true,
-        max_tokens: 1500,
         temperature: 0.7,
         messages: convo,
       }),
     });
     if (!finalResp.ok || !finalResp.body) {
       const t = await finalResp.text().catch(() => "");
-      console.error("Groq final error:", finalResp.status, t);
+      console.error("AI final error:", finalResp.status, t);
       return new Response(JSON.stringify({ error: "Үйлчилгээ түр ажиллахгүй байна." }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
