@@ -125,6 +125,8 @@ const Admin = () => {
       description: editingLesson.description || "",
       content: editingLesson.content || "",
       order_index: editingLesson.order_index ?? 0,
+      accent_color: editingLesson.accent_color || "#3b82f6",
+      cover_image: editingLesson.cover_image || null,
     };
     if (editingLesson.id) {
       const { error } = await supabase.from("lessons").update(payload).eq("id", editingLesson.id);
