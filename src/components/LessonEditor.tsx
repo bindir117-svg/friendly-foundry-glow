@@ -286,7 +286,7 @@ export default function LessonEditor({ draft, onChange }: Props) {
             {draft.cover_image && (
               <img src={draft.cover_image} alt="" className="w-full h-32 object-cover rounded-lg mb-3" />
             )}
-            <ReactMarkdown>{draft.content || "_Урьдчилан харах хоосон_"}</ReactMarkdown>
+            <LessonMarkdown content={draft.content || "_Урьдчилан харах хоосон_"} />
           </div>
         )}
       </div>
