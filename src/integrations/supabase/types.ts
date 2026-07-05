@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          code: string
+          condition_type: string
+          condition_value: number
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          code: string
+          condition_type: string
+          condition_value?: number
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          code?: string
+          condition_type?: string
+          condition_value?: number
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string
@@ -105,6 +141,7 @@ export type Database = {
           lesson_id: string
           user_id: string
           viewed_at: string
+          xp_earned: number
         }
         Insert: {
           completed?: boolean
@@ -113,6 +150,7 @@ export type Database = {
           lesson_id: string
           user_id: string
           viewed_at?: string
+          xp_earned?: number
         }
         Update: {
           completed?: boolean
@@ -121,6 +159,7 @@ export type Database = {
           lesson_id?: string
           user_id?: string
           viewed_at?: string
+          xp_earned?: number
         }
         Relationships: [
           {
@@ -195,6 +234,74 @@ export type Database = {
         }
         Relationships: []
       }
+      page_blocks: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          page_id: string
+          props: Json
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          page_id: string
+          props?: Json
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          page_id?: string
+          props?: Json
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "page_blocks_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string
+          id: string
+          meta_description: string | null
+          published: boolean
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          published?: boolean
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_description?: string | null
+          published?: boolean
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -202,8 +309,12 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          last_active_date: string | null
+          level: number
+          streak_days: number
           updated_at: string
           user_id: string
+          xp: number
         }
         Insert: {
           avatar_url?: string | null
@@ -211,8 +322,12 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          last_active_date?: string | null
+          level?: number
+          streak_days?: number
           updated_at?: string
           user_id: string
+          xp?: number
         }
         Update: {
           avatar_url?: string | null
@@ -220,8 +335,12 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          last_active_date?: string | null
+          level?: number
+          streak_days?: number
           updated_at?: string
           user_id?: string
+          xp?: number
         }
         Relationships: []
       }
@@ -302,6 +421,35 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_id: string
+          id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_id: string
+          id?: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_id?: string
+          id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_id_fkey"
+            columns: ["achievement_id"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -328,6 +476,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_xp: {
+        Args: { _amount: number; _user_id: string }
+        Returns: {
+          leveled_up: boolean
+          new_level: number
+          new_xp: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
