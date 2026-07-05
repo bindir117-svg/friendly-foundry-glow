@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, MessageSquare, Loader2, Users, Shield, StickyNote, BookOpen, Plus, Edit3, Trash2, Save, X } from "lucide-react";
+import { ArrowLeft, MessageSquare, Loader2, Users, Shield, StickyNote, BookOpen, Plus, Edit3, Trash2, Save, X, LayoutTemplate } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { useToast } from "@/hooks/use-toast";
 import LessonEditor from "@/components/LessonEditor";
+import PageBuilderTab from "@/components/admin/PageBuilderTab";
 
 interface Profile {
   user_id: string;
@@ -55,7 +56,7 @@ const Admin = () => {
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [selectedSession, setSelectedSession] = useState<Sess | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
-  const [tab, setTab] = useState<"chat" | "notes" | "lessons">("chat");
+  const [tab, setTab] = useState<"chat" | "notes" | "lessons" | "pages">("chat");
   const [loading, setLoading] = useState(true);
   const [loadingMsgs, setLoadingMsgs] = useState(false);
 
@@ -203,9 +204,15 @@ const Admin = () => {
         >
           <BookOpen className="w-3.5 h-3.5 inline mr-1.5" /> Хичээл
         </button>
+        <button
+          onClick={() => setTab("pages")}
+          className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all ${tab === "pages" ? "bg-primary text-primary-foreground" : "bg-secondary/40 text-muted-foreground hover:bg-secondary"}`}
+        >
+          <LayoutTemplate className="w-3.5 h-3.5 inline mr-1.5" /> Хуудас
+        </button>
       </div>
 
-      {tab === "lessons" ? (
+      {tab === "pages" ? <PageBuilderTab /> : tab === "lessons" ? (
         <div className="flex-1 p-3 min-h-0 flex flex-col gap-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex gap-2">
