@@ -19,6 +19,9 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import confetti from "canvas-confetti";
 import { cn } from "@/lib/utils";
+import LessonMarkdown from "@/components/lesson/LessonMarkdown";
+import { XPBadge } from "@/components/XPBadge";
+import { useXP } from "@/hooks/useXP";
 
 interface Lesson {
   id: string;
@@ -102,6 +105,7 @@ const Learn = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { award } = useXP();
   const params = useParams();
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progress, setProgress] = useState<Record<string, boolean>>({});
@@ -171,16 +175,19 @@ const Learn = () => {
 
   const markComplete = async (lesson: Lesson) => {
     if (!user) return;
+    const wasDone = !!progress[lesson.id];
     await supabase.from("lesson_progress").upsert(
-      { user_id: user.id, lesson_id: lesson.id, completed: true, completed_at: new Date().toISOString() },
+      { user_id: user.id, lesson_id: lesson.id, completed: true, completed_at: new Date().toISOString(), xp_earned: 15 },
       { onConflict: "user_id,lesson_id" },
     );
     setProgress((p) => ({ ...p, [lesson.id]: true }));
+    if (!wasDone) await award(15, "Хичээл дуусгасан");
     const arr = lessonsByLevel[lesson.level];
     const idx = arr.findIndex((l) => l.id === lesson.id);
     const next = arr[idx + 1];
     if (next) navigate(`/learn/lesson/${next.id}`);
     else {
+      fireCelebration();
       toast({ title: "🎉 Бүх хичээл дууссан!", description: "Одоо шалгалт өгөөрэй." });
       navigate("/learn");
     }
@@ -262,7 +269,7 @@ const Learn = () => {
             [&_summary]:cursor-pointer [&_summary]:font-bold [&_summary]:text-accent [&_summary]:text-base [&_summary]:select-none [&_summary]:py-1
             [&_details[open]_summary]:mb-3 [&_details[open]_summary]:pb-2 [&_details[open]_summary]:border-b [&_details[open]_summary]:border-accent/20"
           >
-            <ReactMarkdown>{active.content}</ReactMarkdown>
+            <LessonMarkdown content={active.content} />
           </article>
 
           {/* Action footer */}
@@ -307,6 +314,8 @@ const Learn = () => {
             Хичээл бүрийг дараалан үзэж, түвшний эцэст 26 асуултын <span className="text-primary font-semibold">100%</span> шалгалт өгч дараагийн түвшинд гар.
           </p>
         </div>
+
+        <XPBadge />
 
         {loading && <p className="text-muted-foreground">Уншиж байна...</p>}
 

@@ -2,10 +2,12 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import LessonMarkdown from "@/components/lesson/LessonMarkdown";
 import {
   Bold, Italic, Heading1, Heading2, Heading3, List, ListOrdered,
   Quote, Code, Link as LinkIcon, Image as ImageIcon, Eye, Pencil,
   Loader2, Upload, Minus, Table as TableIcon, CheckSquare,
+  HelpCircle, Layers, Lightbulb, Type,
 } from "lucide-react";
 
 export interface LessonDraft {
@@ -239,6 +241,11 @@ export default function LessonEditor({ draft, onChange }: Props) {
         } />
         <Tool icon={Minus} label="Зураас" onClick={() => insertAtCursor("\n\n---\n\n")} />
         <Tool icon={Code} label="Code block" onClick={() => insertAtCursor("\n```\nкод\n```\n")} />
+        <div className="w-px h-4 bg-border/60 mx-1" />
+        <Tool icon={HelpCircle} label="Quiz" onClick={() => insertAtCursor(`\n\n:::quiz\n{"q":"Асуулт?","options":["Хариулт 1","Хариулт 2","Хариулт 3"],"answer":0,"explain":"Учир нь..."}\n:::\n\n`)} />
+        <Tool icon={Layers} label="Flashcard" onClick={() => insertAtCursor(`\n\n:::flashcard\n{"front":"Асуулт","back":"Хариулт"}\n:::\n\n`)} />
+        <Tool icon={Type} label="Нөх" onClick={() => insertAtCursor(`\n\n:::fill\n{"prompt":"____ гэж юу вэ?","answer":"хариулт"}\n:::\n\n`)} />
+        <Tool icon={Lightbulb} label="Санамж" onClick={() => insertAtCursor(`\n\n:::callout tip\nЧухал санамж энд...\n:::\n\n`)} />
         <div className="ml-auto flex items-center gap-0.5 bg-background/60 rounded-md p-0.5">
           {(["edit", "split", "preview"] as const).map((m) => (
             <button
@@ -279,7 +286,7 @@ export default function LessonEditor({ draft, onChange }: Props) {
             {draft.cover_image && (
               <img src={draft.cover_image} alt="" className="w-full h-32 object-cover rounded-lg mb-3" />
             )}
-            <ReactMarkdown>{draft.content || "_Урьдчилан харах хоосон_"}</ReactMarkdown>
+            <LessonMarkdown content={draft.content || "_Урьдчилан харах хоосон_"} />
           </div>
         )}
       </div>

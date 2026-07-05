@@ -8,6 +8,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import PageRenderer from "@/components/PageRenderer";
+import { XPBadge } from "@/components/XPBadge";
 
 interface RecentChat { id: string; title: string; updated_at: string; }
 interface RecentNote { id: string; title: string; bg_color: string; updated_at: string; }
@@ -53,6 +55,11 @@ const Index = () => {
           </h1>
           <h2 className="text-2xl md:text-4xl font-bold text-foreground/90">Юу мэдмээр байна?</h2>
         </div>
+
+        <XPBadge />
+
+        <PageRenderer slug="home" />
+
 
         {/* Feature cards — black with pink frame */}
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
