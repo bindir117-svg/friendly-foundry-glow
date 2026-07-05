@@ -2,10 +2,12 @@ import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import LessonMarkdown from "@/components/lesson/LessonMarkdown";
 import {
   Bold, Italic, Heading1, Heading2, Heading3, List, ListOrdered,
   Quote, Code, Link as LinkIcon, Image as ImageIcon, Eye, Pencil,
   Loader2, Upload, Minus, Table as TableIcon, CheckSquare,
+  HelpCircle, Layers, Lightbulb, Type,
 } from "lucide-react";
 
 export interface LessonDraft {
